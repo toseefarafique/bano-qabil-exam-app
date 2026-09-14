@@ -1,6 +1,7 @@
-import 'package:banoqabi_exam/Student/History.dart';
-import 'package:banoqabi_exam/Student/home_screen.dart';
-import 'package:banoqabi_exam/Student/profile_user.dart';
+
+import 'History.dart';
+import 'home_screen.dart';
+import 'profile_user.dart';
 import 'package:flutter/material.dart';
 
 class UpcomingExam extends StatefulWidget {
