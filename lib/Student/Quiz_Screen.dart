@@ -1,4 +1,4 @@
-import 'package:banoqabi_exam/Result_screen.dart';
+import 'package:banoqabi_exam/Student/Result_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 

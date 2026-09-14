@@ -1,4 +1,4 @@
-import 'package:banoqabi_exam/home_screen.dart';
+import 'package:banoqabi_exam/Student/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class LogoScreen extends StatefulWidget {

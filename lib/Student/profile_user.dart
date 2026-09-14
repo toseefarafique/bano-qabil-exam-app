@@ -1,7 +1,7 @@
 
-import 'package:banoqabi_exam/History.dart';
-import 'package:banoqabi_exam/Upcoming_Exam.dart';
-import 'package:banoqabi_exam/home_screen.dart';
+import 'package:banoqabi_exam/Student/History.dart';
+import 'package:banoqabi_exam/Student/Upcoming_Exam.dart';
+import 'package:banoqabi_exam/Student/home_screen.dart';
 
 import 'package:flutter/material.dart';
 // import 'package:firebase_auth/firebase_auth.dart';

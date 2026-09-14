@@ -1,4 +1,4 @@
-import 'package:banoqabi_exam/Quiz_Screen.dart';
+import 'package:banoqabi_exam/Student/Quiz_Screen.dart';
 import 'package:flutter/material.dart';
 
 class SelectSubject extends StatefulWidget {
