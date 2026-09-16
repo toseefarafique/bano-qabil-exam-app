@@ -1,6 +1,6 @@
 {
-    "name": "bano_qabil_exam",
-    "short_name": "bano_qabil_exam",
+    "name": "banoqabi_exam",
+    "short_name": "banoqabi_exam",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
