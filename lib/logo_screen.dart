@@ -1,4 +1,6 @@
-import 'package:banoqabi_exam/Student/home_screen.dart';
+import 'package:bano_qabil_exam/Student/home_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class LogoScreen extends StatefulWidget {
@@ -18,6 +20,9 @@ class _LogoScreenState extends State<LogoScreen> {
 
 final TextEditingController emailController = TextEditingController();
 final TextEditingController passwordController = TextEditingController();
+final TextEditingController nameController = TextEditingController();
+final TextEditingController registerEmailController =
+    TextEditingController();
    @override
   Widget build(BuildContext context) {
      return Scaffold(
@@ -136,6 +141,7 @@ final TextEditingController passwordController = TextEditingController();
         
          Padding(padding: EdgeInsets.only(left: 25,right: 25),
           child:TextFormField(
+            controller: emailController,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (value){
               if(value==null ||value.trim().isEmpty){
@@ -170,6 +176,7 @@ final TextEditingController passwordController = TextEditingController();
        Padding(padding: EdgeInsets.only(left: 25,right: 25),
 
         child:TextFormField(
+          controller: passwordController,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: (value) {
             if(value==null || value.trim().isEmpty){
@@ -215,12 +222,47 @@ final TextEditingController passwordController = TextEditingController();
         ),
         Padding(padding: EdgeInsets.only(left: 20,right: 20),
        child: Align(alignment: AlignmentGeometry.center,
-        child: ElevatedButton(onPressed: (){
-          if(_formKey.currentState!.validate()){
-            // Navigator.push(context,
-            // MaterialPageRoute(builder: (context)=> const homePage()));
-          }
-        },
+        child: ElevatedButton(
+         onPressed: () async {
+  if (_formKey.currentState!.validate()) {
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = "Login failed";
+
+      if (e.code == 'user-not-found') {
+        message = "No account found with this email";
+      } else if (e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
+        message = "Invalid email or password";
+      } else if (e.code == 'invalid-email') {
+        message = "Please enter a valid email";
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Something went wrong"),
+        ),
+      );
+    }
+  }
+},
         style: ElevatedButton.styleFrom(
           backgroundColor:Color(0xFF6F435C),
           foregroundColor: Colors.white,
@@ -263,7 +305,7 @@ final TextEditingController passwordController = TextEditingController();
               ),),
               SizedBox(height: 5,),
              TextFormField(
-            
+            controller: registerEmailController,
             validator: (value){
               if(value==null ||value.trim().isEmpty){
                 return 'Please enter a valid email';
@@ -404,12 +446,71 @@ final TextEditingController passwordController = TextEditingController();
             )
         ),),
         SizedBox(height: 20),
-        ElevatedButton(onPressed: (){
-         if(_formKey.currentState!.validate()){
-            // Navigator.push(context,
-            //   MaterialPageRoute(builder: (context)=> const login_screen()));
-         };
-        },
+        ElevatedButton(
+          onPressed: () async {
+  if (_formKey.currentState!.validate()) {
+    if (selectedRole.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select a role first"),
+        ),
+      );
+      return;
+    }
+
+    try {
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: registerEmailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+        'name': nameController.text.trim(),
+        'email': registerEmailController.text.trim(),
+        'role': selectedRole,
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Registration successful!"),
+        ),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = "Registration failed";
+
+      if (e.code == 'email-already-in-use') {
+        message = "This email is already registered";
+      } else if (e.code == 'weak-password') {
+        message = "Password is too weak";
+      } else if (e.code == 'invalid-email') {
+        message = "Please enter a valid email";
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Something went wrong"),
+        ),
+      );
+    }
+  }
+},
         
         style: ElevatedButton.styleFrom(
           elevation: 5,
@@ -466,8 +567,7 @@ final TextEditingController passwordController = TextEditingController();
       onTap: () {
         setState(() {
           selectedRole = "Student";
-          emailController.text = "student@banoqabil.org";
-          passwordController.text = "student123";
+         
           });
         Navigator.push(context,
          MaterialPageRoute(builder: (context)=> HomeScreen()));
@@ -516,8 +616,7 @@ final TextEditingController passwordController = TextEditingController();
       onTap: () {
         setState(() {
           selectedRole = "Teacher";
-          emailController.text = "teacher@banoqabil.org";
-          passwordController.text = "teacher123";
+        
         });
       },
       child: Container(
@@ -564,8 +663,7 @@ final TextEditingController passwordController = TextEditingController();
       onTap: () {
         setState(() {
           selectedRole = "Controller";
-          emailController.text = "controller@banoqabil.org";
-          passwordController.text = "controller123";
+        
         });
       },
       child: Container(

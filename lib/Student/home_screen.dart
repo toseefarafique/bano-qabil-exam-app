@@ -1,6 +1,6 @@
-import 'package:banoqabi_exam/Student/History.dart';
-import 'package:banoqabi_exam/Student/Upcoming_Exam.dart';
-import 'package:banoqabi_exam/Student/profile_user.dart';
+import 'package:bano_qabil_exam/Student/History.dart';
+import 'package:bano_qabil_exam/Student/Upcoming_Exam.dart';
+import 'package:bano_qabil_exam/Student/profile_user.dart';
 import 'package:flutter/material.dart';
 import 'select_subject.dart';
 
@@ -16,45 +16,124 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    appBar: AppBar(
-       backgroundColor: Color(0xFF6F435C),
-      leading: IconButton(onPressed: (){
-        Navigator.pop(context);
-      },
-       icon: Icon(Icons.arrow_back,
-       size: 30,
-       color: Color(0xFFFFFBF0),)),
+    // appBar: AppBar(
+    //    backgroundColor: Color(0xFF6F435C),
+    //   leading: IconButton(onPressed: (){
+    //     Navigator.pop(context);
+    //   },
+    //    icon: Icon(Icons.arrow_back,
+    //    size: 30,
+    //    color: Color(0xFFFFFBF0),)),
      
-      title: 
-       Text("Bano Qabil Exam",
-      style: TextStyle(
-        color:  Color(0xFFFFFBF0),
-        fontWeight: FontWeight.bold,
-        fontSize: 30,
-      ),
+    //   title: 
+    //    Text("Bano Qabil Exam",
+    //   style: TextStyle(
+    //     color:  Color(0xFFFFFBF0),
+    //     fontWeight: FontWeight.bold,
+    //     fontSize: 30,
+    //   ),
       
-    ),
+    // ),
      
-      actions: [
-        Padding(padding: EdgeInsets.only(right: 10),
-        child:IconButton(onPressed: (){
+    //   actions: [
+    //     Padding(padding: EdgeInsets.only(right: 10),
+    //     child:IconButton(onPressed: (){
 
-        },
-         icon: Icon(Icons.notifications,
-         size: 35,
-         color:Color(0xFFFFFBF0),))
-        ),
-      ],
-    ),
+    //     },
+    //      icon: Icon(Icons.notifications,
+    //      size: 35,
+    //      color:Color(0xFFFFFBF0),))
+    //     ),
+    //   ],
+    // ),
     body: SingleChildScrollView(
+
       child: Container(
            color:  Color(0xFFFFFBF0),
-        padding: EdgeInsets.all(20),
+        // padding: EdgeInsets.all(20),
      child: Column(
         
         children: [
           Container(
-          
+        
+        width: double.infinity,
+        padding: EdgeInsets.fromLTRB(0, 10, 15, 25),
+        decoration: const BoxDecoration(
+          color: Color(0xFF6F435C),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(25),
+            bottomRight: Radius.circular(25),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+           
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children:  [
+                   Row(
+                    children: [
+                       IconButton(onPressed: (){
+              Navigator.pop(context);
+               },
+            icon: Icon(Icons.arrow_back,
+             size: 30,
+              color: Color(0xFFFFFBF0),)),
+           
+              Text(
+                    "Bano Qabil Exam",
+                    style: TextStyle(
+                      color: Color(0xFFFFFBF0),
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+            
+                    ],
+                   ),
+                  
+
+                  SizedBox(height: 5),
+                  Padding(padding: EdgeInsets.only(left: 45),
+                   child:Text(
+                    "Learn • Practice • Succeed",
+                    style: TextStyle(
+                      color: Color(0xFFFFFBF0),
+                      fontSize: 15,
+                    ),
+                  ),)
+                 
+                ],
+              ),
+            ),
+
+            // Notification button
+            Container(
+              height: 48,
+              width: 48,
+              decoration: BoxDecoration(
+                color: Color(0xFFFFFBF0),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: IconButton(
+                onPressed: () {
+                  // Notifications screen later
+                },
+                icon: const Icon(
+                  Icons.notifications_none_rounded,
+                  color: Color(0xFF6F435C),
+                  size: 29,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+         
+          Container(
+          padding: EdgeInsets.all(15),
             child: Row(
               children: [
                 CircleAvatar(
@@ -65,8 +144,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 size: 55,),
                 ),
                 
-               Padding(padding: EdgeInsetsGeometry.only(left: 20),
-                child:Column(
+               Padding(padding: EdgeInsetsGeometry.only(left: 10),
+               child: Row(
+                children: [
+                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                      Text("Assalam-o-Alaikum",
@@ -88,7 +169,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       
                     ),),
                   ],
-                )),
+                ),
+                Image.asset('assets/images/girl2_pic.png',
+                height: 160,
+                width: 160,
+                fit: BoxFit.contain,)
+                ],
+               ),),
               ],
             ),
           ),

@@ -1,5 +1,5 @@
-import 'package:banoqabi_exam/Student/Review_Answer.dart';
-import 'package:banoqabi_exam/Student/home_screen.dart';
+import 'package:bano_qabil_exam/Student/Review_Answer.dart';
+import 'package:bano_qabil_exam/Student/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class ResultScreen extends StatefulWidget {

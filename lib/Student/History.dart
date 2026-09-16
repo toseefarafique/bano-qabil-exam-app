@@ -1,6 +1,6 @@
-import 'package:banoqabi_exam/Student/Upcoming_Exam.dart';
-import 'package:banoqabi_exam/Student/home_screen.dart';
-import 'package:banoqabi_exam/Student/profile_user.dart';
+import 'package:bano_qabil_exam/Student/Upcoming_Exam.dart';
+import 'package:bano_qabil_exam/Student/home_screen.dart';
+import 'package:bano_qabil_exam/Student/profile_user.dart';
 import 'package:flutter/material.dart';
 
 class History extends StatefulWidget {

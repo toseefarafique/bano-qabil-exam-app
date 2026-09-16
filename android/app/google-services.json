@@ -18,11 +18,14 @@
           "current_key": "AIzaSyATVmIYvNcuclJ5jiiY7KkSvvan3P0BQ40"
         }
       ],
+
+
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": []
         }
       }
+
     }
   ],
   "configuration_version": "1"

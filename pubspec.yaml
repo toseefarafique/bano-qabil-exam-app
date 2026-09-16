@@ -5,12 +5,11 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-sdk: ^3.13.2
+  sdk: ^3.13.2
 
 dependencies:
-flutter:
-sdk: flutter
-
+  flutter:
+    sdk: flutter
 cupertino_icons: ^1.0.8
 firebase_core: ^4.14.0
 firebase_auth: ^6.6.1
@@ -26,3 +25,4 @@ uses-material-design: true
 assets:
   - assets/images/book_logo1.png
   - assets/images/logo.png
+  - assets/images/girl2_pic.png
