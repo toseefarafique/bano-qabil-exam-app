@@ -9,7 +9,7 @@ class CreateQuiz extends StatefulWidget {
 }
 
 class _CreateQuizState extends State<CreateQuiz> {
-  // ================= COLORS =================
+  
 
   static const Color primary = Color(0xFF6D597A);
   static const Color dark = Color(0xFF44364D);
@@ -17,7 +17,7 @@ class _CreateQuizState extends State<CreateQuiz> {
   static const Color background = Color(0xFFF8F4F0);
   static const Color textColor = Color(0xFF332D35);
 
-  // ================= CONTROLLERS =================
+  
 
   final TextEditingController titleController =
       TextEditingController();
@@ -25,7 +25,7 @@ class _CreateQuizState extends State<CreateQuiz> {
   final TextEditingController timeController =
       TextEditingController();
 
-  // ================= DROPDOWN VALUES =================
+
 
   String selectedSubject = 'Flutter';
   String selectedType = 'Practice';
@@ -43,7 +43,7 @@ class _CreateQuizState extends State<CreateQuiz> {
     return Scaffold(
       backgroundColor: background,
 
-      // ================= APP BAR =================
+      
 
       appBar: AppBar(
         backgroundColor: dark,
@@ -69,7 +69,6 @@ class _CreateQuizState extends State<CreateQuiz> {
         ),
       ),
 
-      // ================= BODY =================
 
       body: Center(
         child: ConstrainedBox(
@@ -83,7 +82,7 @@ class _CreateQuizState extends State<CreateQuiz> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                // ================= HEADING =================
+          
 
                 const Text(
                   'Create New Quiz',
@@ -106,7 +105,7 @@ class _CreateQuizState extends State<CreateQuiz> {
 
                 const SizedBox(height: 22),
 
-                // ================= QUIZ TITLE =================
+              
 
                 _label('Quiz / Exam Title'),
 
@@ -119,7 +118,7 @@ class _CreateQuizState extends State<CreateQuiz> {
 
                 const SizedBox(height: 18),
 
-                // ================= SUBJECT + TYPE =================
+                
 
                 Row(
                   children: [
@@ -165,9 +164,8 @@ class _CreateQuizState extends State<CreateQuiz> {
 
                 const SizedBox(height: 18),
 
-                // ================= TIME + BATCH =================
-
-                Row(
+                
+              Row(
                   children: [
 
                     Expanded(
@@ -214,7 +212,7 @@ class _CreateQuizState extends State<CreateQuiz> {
 
                 const SizedBox(height: 25),
 
-                // ================= SELECT QUESTIONS =================
+        
 
                 Container(
                   width: double.infinity,
@@ -415,7 +413,7 @@ class _CreateQuizState extends State<CreateQuiz> {
 
                 const SizedBox(height: 25),
 
-                // ================= BUTTONS =================
+                
 
                 Row(
                   children: [
@@ -507,7 +505,7 @@ class _CreateQuizState extends State<CreateQuiz> {
     );
   }
 
-  // ================= DROPDOWN =================
+  
 
   Widget _dropdownField({
     required String label,
@@ -570,7 +568,7 @@ class _CreateQuizState extends State<CreateQuiz> {
     );
   }
 
-  // ================= TEXT FIELD =================
+
 
   Widget _textField({
     required TextEditingController controller,
@@ -641,7 +639,7 @@ class _CreateQuizState extends State<CreateQuiz> {
     );
   }
 
-  // ================= SAVE QUIZ =================
+  
 
   void _saveQuiz(bool publish) {
     if (titleController.text.trim().isEmpty) {

@@ -25,9 +25,6 @@ class _QuestionBankState extends State<QuestionBank> {
   String selectedSubject = 'All Subjects';
   String selectedDifficulty = 'All Difficulty';
 
-  // =========================
-  // DEMO QUESTIONS
-  // =========================
 
   final List<Map<String, String>> questions = [
     {
