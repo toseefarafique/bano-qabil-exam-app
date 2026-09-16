@@ -1,27 +1,41 @@
 import 'package:flutter/material.dart';
+import 'question_bank.dart';
+import 'create_quiz.dart';
+import 'attempts_results.dart';
 
-class TeacherDashboard extends StatelessWidget {
+class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
 
+  @override
+  State<TeacherDashboard> createState() => _TeacherDashboardState();
+}
 
+class _TeacherDashboardState extends State<TeacherDashboard> {
+  // ================= COLORS =================
   static const Color plum = Color(0xFF6D597A);
   static const Color darkPlum = Color(0xFF44364D);
   static const Color accent = Color(0xFFDDBEA9);
   static const Color cream = Color(0xFFF8F4F0);
   static const Color textColor = Color(0xFF332D35);
 
+  // ================= BOTTOM NAV INDEX =================
+  int _currentIndex = 0;
+  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: cream,
 
-
+      // ============================================================
+      // DRAWER
+      // ============================================================
       drawer: Drawer(
         backgroundColor: plum,
         child: SafeArea(
           child: Column(
             children: [
-              // Logo / App Name
+              // ================= LOGO / APP NAME =================
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -31,7 +45,9 @@ class TeacherDashboard extends StatelessWidget {
                       color: Colors.white,
                       size: 38,
                     ),
+
                     const SizedBox(height: 8),
+
                     const Text(
                       "Bano Qabil Exam",
                       style: TextStyle(
@@ -40,11 +56,13 @@ class TeacherDashboard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     const SizedBox(height: 3),
-                    Text(
+
+                    const Text(
                       "Learn • Practice • Grow",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white70,
                         fontSize: 11,
                       ),
                     ),
@@ -58,36 +76,87 @@ class TeacherDashboard extends StatelessWidget {
                 endIndent: 20,
               ),
 
-              // Menu Items
+              // ================= DASHBOARD =================
               _drawerItem(
                 icon: Icons.dashboard_outlined,
                 title: "Dashboard",
-                selected: true,
+                selected: _currentIndex == 0,
+                onTap: () {
+                  Navigator.pop(context);
+
+                  setState(() {
+                    _currentIndex = 0;
+                  });
+                },
               ),
 
+              // ================= QUESTION BANK =================
               _drawerItem(
                 icon: Icons.edit_note,
                 title: "Question Bank",
+                selected: _currentIndex == 1,
+                onTap: () {
+                  Navigator.pop(context);
+
+                  setState(() {
+                    _currentIndex = 1;
+                  });
+                },
               ),
 
+              // ================= ADD QUESTIONS =================
               _drawerItem(
                 icon: Icons.menu_book_outlined,
                 title: "Add Questions",
+                onTap: () {
+                  Navigator.pop(context);
+
+                  // Later Add Questions screen ki navigation yahan add hogi.
+                },
               ),
 
+              // ================= CREATE EXAM =================
               _drawerItem(
                 icon: Icons.bar_chart_outlined,
                 title: "Create Exam",
+                onTap: () {
+                  Navigator.pop(context);
+                   Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const CreateQuiz(),
+    ),
+  );
+
+                  // Later Create Exam screen ki navigation yahan add hogi.
+                },
               ),
+              _drawerItem(
+  icon: Icons.people_outline,
+  title: "Attempts & Results",
+  selected: _currentIndex == 3,
+  onTap: () {
+    Navigator.pop(context);
 
-              
+    setState(() {
+      _currentIndex = 3;
+    });
+  },
+),
 
-            
+
+
               const Spacer(),
 
+              // ================= LOGOUT =================
               _drawerItem(
                 icon: Icons.logout,
                 title: "Logout",
+                onTap: () {
+                  Navigator.pop(context);
+
+                  // Later logout functionality add hogi.
+                },
               ),
 
               const SizedBox(height: 15),
@@ -96,91 +165,167 @@ class TeacherDashboard extends StatelessWidget {
         ),
       ),
 
+      // ============================================================
+      // BODY
+      // ============================================================
+      body: IndexedStack(
+  index: _currentIndex,
+  children: [
+    _dashboardScreen(),
+    QuestionBank(
+      onBack: () {
+        setState(() {
+          _currentIndex = 0;
+        });
+      },
+    ),
       
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 1000,
-            ),
-            child: CustomScrollView(
-              slivers: [
-                // ================= TOP BAR =================
-                SliverAppBar(
-                  backgroundColor: cream,
-                  elevation: 0,
-                  pinned: true,
-                  automaticallyImplyLeading: false,
+      
+      const CreateQuiz(),
+    const AttemptsResults(),
+  ],
+),
 
-                  leading: Builder(
-                    builder: (context) {
-                      return IconButton(
-                        icon: const Icon(
-                          Icons.menu,
-                          color: textColor,
-                          size: 28,
-                        ),
-                        onPressed: () {
-                          Scaffold.of(context).openDrawer();
-                        },
-                      );
-                    },
-                  ),
+      // ============================================================
+      // ONE COMMON BOTTOM NAVIGATION BAR
+      // ============================================================
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        type: BottomNavigationBarType.fixed,
 
-                  title: const Text(
-                    "Dashboard",
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+        selectedItemColor: plum,
+        unselectedItemColor: Colors.grey,
 
-                  actions: [
-                    IconButton(
-                      onPressed: () {},
+        backgroundColor: Colors.white,
+        elevation: 10,
+
+        onTap: (index) {
+  setState(() {
+    _currentIndex = index;
+  });
+},
+
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu_book_outlined),
+            activeIcon: Icon(Icons.menu_book),
+            label: 'Questions',
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.quiz_outlined),
+            activeIcon: Icon(Icons.quiz),
+            label: 'Quizzes',
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people_outline),
+            activeIcon: Icon(Icons.people),
+            label: 'Attempts',
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // DASHBOARD SCREEN
+  // ============================================================
+
+  Widget _dashboardScreen() {
+    return SafeArea(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 1000,
+          ),
+          child: CustomScrollView(
+            slivers: [
+              // ================= TOP APP BAR =================
+              SliverAppBar(
+                backgroundColor: darkPlum,
+                elevation: 0,
+                pinned: true,
+                automaticallyImplyLeading: false,
+
+                // Hamburger Button
+                leading: Builder(
+                  builder: (context) {
+                    return IconButton(
                       icon: const Icon(
-                        Icons.notifications_none,
-                        color: textColor,
+                        Icons.menu,
+                        color: Colors.white,
+                        size: 28,
                       ),
-                    ),
-
-                    // Profile Circle
-                    Container(
-                      margin: const EdgeInsets.only(
-                        right: 15,
-                        left: 5,
-                      ),
-                      width: 36,
-                      height: 36,
-                      decoration: const BoxDecoration(
-                        color: plum,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "AK",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                      onPressed: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                    );
+                  },
                 ),
 
-              
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    18,
-                    15,
-                    18,
-                    30,
+                // Title
+                title: const Text(
+                  "Dashboard",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
+                ),
+
+                // Actions
+                actions: [
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(
+                      Icons.notifications_none,
+                      color: Colors.white,
+                    ),
+                  ),
+
+                  Container(
+                    margin: const EdgeInsets.only(
+                      right: 15,
+                      left: 5,
+                    ),
+                    width: 36,
+                    height: 36,
+                    decoration: const BoxDecoration(
+                      color: accent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Text(
+                        "AK",
+                        style: TextStyle(
+                          color: darkPlum,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // ================= DASHBOARD CONTENT =================
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  18,
+                  15,
+                  18,
+                  30,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate(
+                    [
                       // Greeting
                       const Text(
                         "Good Morning,",
@@ -213,7 +358,7 @@ class TeacherDashboard extends StatelessWidget {
 
                       const SizedBox(height: 22),
 
-                      
+                      // ================= OVERVIEW =================
                       const Text(
                         "Overview",
                         style: TextStyle(
@@ -225,10 +370,11 @@ class TeacherDashboard extends StatelessWidget {
 
                       const SizedBox(height: 12),
 
-                      // Responsive Cards
+                      // ================= STAT CARDS =================
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          int columns = constraints.maxWidth > 650 ? 4 : 2;
+                          int columns =
+                              constraints.maxWidth > 650 ? 4 : 2;
 
                           return GridView.count(
                             crossAxisCount: columns,
@@ -245,18 +391,21 @@ class TeacherDashboard extends StatelessWidget {
                                 value: "5",
                                 color: plum,
                               ),
+
                               _StatCard(
                                 icon: Icons.access_time,
                                 title: "Active Exams",
                                 value: "2",
                                 color: plum,
                               ),
+
                               _StatCard(
                                 icon: Icons.people_outline,
                                 title: "Total Students",
                                 value: "24",
                                 color: plum,
                               ),
+
                               _StatCard(
                                 icon: Icons.check_circle_outline,
                                 title: "Completed",
@@ -270,7 +419,7 @@ class TeacherDashboard extends StatelessWidget {
 
                       const SizedBox(height: 28),
 
-                      
+                      // ================= RECENT EXAMS =================
                       Row(
                         mainAxisAlignment:
                             MainAxisAlignment.spaceBetween,
@@ -299,6 +448,7 @@ class TeacherDashboard extends StatelessWidget {
 
                       const SizedBox(height: 5),
 
+                      // Exam 1
                       _examCard(
                         icon: Icons.lock_outline,
                         title: "Flutter Basics Quiz",
@@ -308,6 +458,7 @@ class TeacherDashboard extends StatelessWidget {
                         statusColor: Colors.green,
                       ),
 
+                      // Exam 2
                       _examCard(
                         icon: Icons.menu_book_outlined,
                         title: "Web Development Test",
@@ -317,6 +468,7 @@ class TeacherDashboard extends StatelessWidget {
                         statusColor: plum,
                       ),
 
+                      // Exam 3
                       _examCard(
                         icon: Icons.science_outlined,
                         title: "Cybersecurity Exam",
@@ -328,7 +480,7 @@ class TeacherDashboard extends StatelessWidget {
 
                       const SizedBox(height: 22),
 
-                      
+                      // ================= CREATE EXAM BOX =================
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -337,7 +489,6 @@ class TeacherDashboard extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            // Illustration Placeholder
                             Container(
                               width: 65,
                               height: 65,
@@ -372,9 +523,11 @@ class TeacherDashboard extends StatelessWidget {
                                   const SizedBox(height: 5),
 
                                   Text(
-                                    "Set up questions, define time\nand publish instantly.",
+                                    "Set up questions, define time\n"
+                                    "and publish instantly.",
                                     style: TextStyle(
-                                      color: textColor.withOpacity(0.65),
+                                      color:
+                                          textColor.withOpacity(0.65),
                                       fontSize: 12,
                                     ),
                                   ),
@@ -382,8 +535,22 @@ class TeacherDashboard extends StatelessWidget {
                                   const SizedBox(height: 12),
 
                                   ElevatedButton.icon(
-                                    onPressed: () {},
-                                    style: ElevatedButton.styleFrom(
+                                    onPressed: () {
+                                       Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const CreateQuiz(),
+      ),
+    );
+
+
+
+
+
+
+                                    },
+                                    style:
+                                        ElevatedButton.styleFrom(
                                       backgroundColor: plum,
                                       foregroundColor: Colors.white,
                                       elevation: 0,
@@ -392,7 +559,8 @@ class TeacherDashboard extends StatelessWidget {
                                         horizontal: 16,
                                         vertical: 10,
                                       ),
-                                      shape: RoundedRectangleBorder(
+                                      shape:
+                                          RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(8),
                                       ),
@@ -411,10 +579,51 @@ class TeacherDashboard extends StatelessWidget {
                           ],
                         ),
                       ),
-                    ]),
+                    ],
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // QUIZZES SCREEN
+  // ============================================================
+
+  Widget _quizzesScreen() {
+    return SafeArea(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 1000,
+          ),
+          child: Scaffold(
+            backgroundColor: cream,
+            appBar: AppBar(
+              backgroundColor: darkPlum,
+              elevation: 0,
+              automaticallyImplyLeading: false,
+              title: const Text(
+                "Quizzes",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            body: const Center(
+              child: Text(
+                "Quizzes Screen",
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         ),
@@ -422,49 +631,95 @@ class TeacherDashboard extends StatelessWidget {
     );
   }
 
-  
-  static Widget _drawerItem({
-    required IconData icon,
-    required String title,
-    bool selected = false,
-  }) {
-    return Builder(
-      builder: (context) {
-        return Container(
-          margin: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 3,
+  // ============================================================
+  // ATTEMPTS SCREEN
+  // ============================================================
+
+  Widget _attemptsScreen() {
+    return SafeArea(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 1000,
           ),
-          decoration: BoxDecoration(
-            color: selected
-                ? Colors.white.withOpacity(0.12)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: ListTile(
-            dense: true,
-            leading: Icon(
-              icon,
-              color: Colors.white,
-              size: 25,
-            ),
-            title: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
+          child: Scaffold(
+            backgroundColor: cream,
+            appBar: AppBar(
+              backgroundColor: darkPlum,
+              elevation: 0,
+              automaticallyImplyLeading: false,
+              title: const Text(
+                "Attempts",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            onTap: () {
-              Navigator.pop(context);
-            },
+            body: const Center(
+              child: Text(
+                "Attempts Screen",
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
-  static Widget _examCard({
+  // ============================================================
+  // DRAWER ITEM
+  // ============================================================
+
+  Widget _drawerItem({
+    required IconData icon,
+    required String title,
+    bool selected = false,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 3,
+      ),
+      decoration: BoxDecoration(
+        color: selected
+            ? Colors.white.withOpacity(0.12)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        dense: true,
+
+        leading: Icon(
+          icon,
+          color: Colors.white,
+          size: 25,
+        ),
+
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+          ),
+        ),
+
+        onTap: onTap,
+      ),
+    );
+  }
+
+  // ============================================================
+  // EXAM CARD
+  // ============================================================
+
+  Widget _examCard({
     required IconData icon,
     required String title,
     required String subtitle,
@@ -484,7 +739,6 @@ class TeacherDashboard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Icon
           Container(
             width: 42,
             height: 42,
@@ -501,7 +755,6 @@ class TeacherDashboard extends StatelessWidget {
 
           const SizedBox(width: 12),
 
-          // Title
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -515,11 +768,13 @@ class TeacherDashboard extends StatelessWidget {
                     fontSize: 14,
                   ),
                 ),
+
                 const SizedBox(height: 4),
+
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: const Color.fromARGB(255, 18, 17, 18).withOpacity(0.55),
+                    color: textColor.withOpacity(0.55),
                     fontSize: 11,
                   ),
                 ),
@@ -527,7 +782,6 @@ class TeacherDashboard extends StatelessWidget {
             ),
           ),
 
-          // Date + Status
           Column(
             crossAxisAlignment:
                 CrossAxisAlignment.end,
@@ -539,7 +793,9 @@ class TeacherDashboard extends StatelessWidget {
                   fontSize: 10,
                 ),
               ),
+
               const SizedBox(height: 5),
+
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 9,
@@ -547,7 +803,8 @@ class TeacherDashboard extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: statusColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius:
+                      BorderRadius.circular(20),
                 ),
                 child: Text(
                   status,
@@ -574,6 +831,9 @@ class TeacherDashboard extends StatelessWidget {
   }
 }
 
+// ============================================================
+// STAT CARD
+// ============================================================
 
 class _StatCard extends StatelessWidget {
   final IconData icon;
@@ -600,14 +860,16 @@ class _StatCard extends StatelessWidget {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           Container(
             width: 34,
             height: 34,
             decoration: BoxDecoration(
               color: const Color(0xFFF0E7E1),
-              borderRadius: BorderRadius.circular(9),
+              borderRadius:
+                  BorderRadius.circular(9),
             ),
             child: Icon(
               icon,
@@ -621,7 +883,8 @@ class _StatCard extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              color: const Color(0xFF332D35).withOpacity(0.6),
+              color: const Color(0xFF332D35)
+                  .withOpacity(0.6),
               fontSize: 10,
             ),
           ),
