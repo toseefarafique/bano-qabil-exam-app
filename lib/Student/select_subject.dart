@@ -1,15 +1,30 @@
-import 'package:bano_qabil_exam/Student/Quiz_Screen.dart';
+import 'Quiz_Screen.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class SelectSubject extends StatefulWidget {
-  const SelectSubject({super.key});
+  final String subjectName;
+  final String subjectId;
+  const SelectSubject({
+    super.key,
+    required this.subjectName,
+    required this.subjectId,
+  });
 
   @override
   State<SelectSubject> createState() => _SelectSubjectState();
 }
 
 class _SelectSubjectState extends State<SelectSubject> {
+ 
   int selectedTab =0;
+  Stream<QuerySnapshot> getQuizzes() {
+  return FirebaseFirestore.instance
+      .collection('quizzes')
+      .where('subjectId', isEqualTo: widget.subjectId)
+      .snapshots();
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,7 +36,7 @@ class _SelectSubjectState extends State<SelectSubject> {
          icon: Icon(Icons.arrow_back,
          color: Color(0xFF6F435C),
          size: 30,)),
-        title: Text("Flutter",
+        title: Text(widget.subjectName,
         style: TextStyle(
           color: Color(0xFF6F435C),
           fontWeight: FontWeight.bold,
@@ -100,140 +115,99 @@ class _SelectSubjectState extends State<SelectSubject> {
 
         ),
         if(selectedTab ==0)
-        Column(
-          children: [
-            Padding(padding: EdgeInsets.all(20),
-       child:Card(
-          elevation: 2,
-          color: Colors.white,
-         child: Padding(padding: EdgeInsets.all(20),
-         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Flutter Basics",
-            style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-            ),),
-            SizedBox(height: 8),
-            Text("Practice . 15 Questions . 15 Minutes",
-            style: TextStyle(
-              fontSize: 15,
-            ),),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(onPressed: (){
-                Navigator.push(context,
-                 MaterialPageRoute(builder: (context)=> QuizScreen()));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor:  Color(0xFF6F435C),
-                foregroundColor: Color(0xFFFFFBF0),
-                elevation: 3,
-                
-              shape:RoundedRectangleBorder(
-                
-                borderRadius: BorderRadius.circular(10),
-              ) 
-              ),
-               child: Text("Start",
-               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-               ),)),
-            )
-          ],
-         ),), 
-        )
-        ),
+          StreamBuilder<QuerySnapshot>(
+  stream: getQuizzes(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
-        Padding(padding: EdgeInsets.only(left: 20,right: 20),
-       child:Card(
-          elevation: 2,
-          color: Colors.white,
-         child: Padding(padding: EdgeInsets.all(20),
-         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Flutter Widgets",
-            style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-            ),),
-            SizedBox(height: 8),
-            Text("Practice . 20 Questions . 20 Minutes",
-            style: TextStyle(
-              fontSize: 15,
-            ),),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(onPressed: (){},
-              style: ElevatedButton.styleFrom(
-                backgroundColor:  Color(0xFF6F435C),
-                foregroundColor: Color(0xFFFFFBF0),
-                elevation: 3,
-                
-              shape:RoundedRectangleBorder(
-                
-                borderRadius: BorderRadius.circular(10),
-              ) 
+    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Text("No Quizzes Available"),
+      );
+    }
+
+    return Column(
+      children: snapshot.data!.docs.map((doc) {
+        var data = doc.data() as Map<String, dynamic>;
+
+        String title = data['title'] ?? "Quiz";
+        int totalQuestion = data['totalQuestion'] ?? 0;
+        int duration = data['duration'] ?? 0;
+
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Card(
+            elevation: 2,
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 25,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    "Practice . $totalQuestion Questions . $duration Minutes",
+                    style: const TextStyle(
+                      fontSize: 15,
+                    ),
+                  ),
+
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => QuizScreen(
+                               quizId: doc.id,
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6F435C),
+                        foregroundColor: const Color(0xFFFFFBF0),
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        "Start",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 28,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-               child: Text("Start",
-               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-               ),)),
-            )
-          ],
-         ),), 
-        )
-        ),   
-        Padding(padding: EdgeInsets.all(20),
-        child: Card(
-          elevation: 2,
-          color: Colors.white,
-        child:Padding(padding: EdgeInsets.all(20),  
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Flutter Full Course",
-            style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-            ),),
-            SizedBox(height: 5),
-             Text("Official . 20 Questions . 25 Minutes",
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),),
-             Align(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(onPressed: (){},
-              style: ElevatedButton.styleFrom(
-                backgroundColor:  Color(0xFF6F435C),
-                foregroundColor: Color(0xFFFFFBF0),
-                elevation: 3,
-                
-              shape:RoundedRectangleBorder(
-                
-                borderRadius: BorderRadius.circular(10),
-              ) 
-              ),
-               child: Text("Start",
-               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-               ),)),
             ),
-          ],
-        ), 
-        ), 
-        ),)
-        
-          ],
-        )
-        else
+          ),
+        );
+      }).toList(),
+    );
+  },
+)
+
+    
+      else
      Padding(padding: EdgeInsets.only(left: 20,right: 20),
      child: Column(
 

@@ -1,227 +1,389 @@
-import 'package:bano_qabil_exam/controller/notifications_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'controller_publish_report_screen.dart';
-import 'teacher_attempts_screen.dart';
+import 'notifications_screen.dart';
+import '../controller/student_results_screen.dart';
 
 class ControllerDashboard extends StatelessWidget {
   const ControllerDashboard({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F4F0),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF6D597A),
-        foregroundColor: Colors.white,
-        title: const Text(
-          'Controller Dashboard',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+  static const Color primaryColor = Color(0xFF6D597A);
+  static const Color darkColor = Color(0xFF44364D);
+  static const Color accentColor = Color(0xFFDDBEA9);
+  static const Color backgroundColor = Color(0xFFF8F4F0);
+  static const Color textColor = Color(0xFF332D35);
+
+  void _openPublishReports(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ControllerPublishReportScreen(),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Welcome, Controller',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF44364D),
-              ),
+    );
+  }
+
+  void _openStudentResults(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ControllerStudentResultsScreen(),
+      ),
+    );
+  }
+
+  void _openNotifications(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ControllerNotificationsScreen(),
+      ),
+    );
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+
+    if (context.mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
+  }
+
+  Widget _actionCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.75),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: darkColor.withValues(alpha: 0.07),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 19,
             ),
-
-            const SizedBox(height: 8),
-
-            const Text(
-              'Manage exams, student results and reports',
-              style: TextStyle(
-                fontSize: 15,
-                color: Color(0xFF6B626D),
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            // Publish & Reports
-            _dashboardCard(
-              context,
-              icon: Icons.assignment_turned_in_outlined,
-              title: 'Publish & Reports',
-              subtitle:
-              'Approve, publish, lock exams and view reports',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                    const ControllerPublishReportScreen(),
+            child: Row(
+              children: [
+                Container(
+                  height: 56,
+                  width: 56,
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryColor.withValues(alpha: 0.18),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            // Student Results
-            _dashboardCard(
-              context,
-              icon: Icons.people_alt_outlined,
-              title: 'Student Results',
-              subtitle:
-              'View student scores and quiz results',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                    const TeacherAttemptsScreen(),
-                  ),
-                );
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            // Notifications
-            _dashboardCard(
-              context,
-              icon: Icons.notifications_none,
-              title: 'Notifications',
-              subtitle: 'View your notifications',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                    const NotificationScreen(),
-                  ),
-                );
-              },
-            ),
-
-            const SizedBox(height: 30),
-
-            // Logout
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF44364D),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                    size: 28,
                   ),
                 ),
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
 
-                  if (!context.mounted) return;
+                const SizedBox(width: 16),
 
-                  Navigator.popUntil(
-                    context,
-                        (route) => route.isFirst,
-                  );
-                },
-                icon: const Icon(Icons.logout),
-                label: const Text(
-                  'Logout',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: darkColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+
+                Container(
+                  height: 34,
+                  width: 34,
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: primaryColor,
+                    size: 15,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _dashboardCard(
-      BuildContext context, {
-        required IconData icon,
-        required String title,
-        required String subtitle,
-        required VoidCallback onTap,
-      }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: const Color(0xFFDDBEA9),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
+  Widget _welcomeHeader() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            darkColor,
+            primaryColor,
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 55,
-              height: 55,
-              decoration: BoxDecoration(
-                color: const Color(0xFF6D597A),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                icon,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: darkColor.withValues(alpha: 0.16),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            height: 55,
+            width: 55,
+            decoration: BoxDecoration(
+              color: accentColor,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.admin_panel_settings_rounded,
+              color: darkColor,
+              size: 30,
+            ),
+          ),
+
+          const SizedBox(width: 15),
+
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome, Controller!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  'Manage exams, student results and reports',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle() {
+    return const Padding(
+      padding: EdgeInsets.only(left: 2, bottom: 13),
+      child: Row(
+        children: [
+          Text(
+            'Controller Actions',
+            style: TextStyle(
+              color: textColor,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Divider(
+              color: accentColor,
+              thickness: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _logoutButton(BuildContext context) {
+    return Container(
+      height: 54,
+      decoration: BoxDecoration(
+        color: darkColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: darkColor.withValues(alpha: 0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => _logout(context),
+          borderRadius: BorderRadius.circular(16),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.logout_rounded,
                 color: Colors.white,
-                size: 28,
+                size: 21,
               ),
+              SizedBox(width: 9),
+              Text(
+                'Logout',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: backgroundColor,
+
+      appBar: AppBar(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+        title: const Text(
+          'Controller Dashboard',
+          style: TextStyle(
+            fontSize: 19,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(15, 20, 15, 20),
+          children: [
+            _welcomeHeader(),
+
+            _sectionTitle(),
+
+            _actionCard(
+              context: context,
+              icon: Icons.fact_check_rounded,
+              title: 'Publish & Reports',
+              subtitle: 'Approve, publish, lock exams and view reports',
+              onTap: () => _openPublishReports(context),
             ),
 
-            const SizedBox(width: 16),
+            _actionCard(
+              context: context,
+              icon: Icons.groups_rounded,
+              title: 'Student Results',
+              subtitle: 'View student scores and quiz results',
+              onTap: () => _openStudentResults(context),
+            ),
 
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
+            _actionCard(
+              context: context,
+              icon: Icons.notifications_active_rounded,
+              title: 'Notifications',
+              subtitle: 'Send important updates to students',
+              onTap: () => _openNotifications(context),
+            ),
+
+            const SizedBox(height: 12),
+
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 15,
+                vertical: 13,
+              ),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: accentColor.withValues(alpha: 0.45),
+                ),
+              ),
+              child: const Row(
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF44364D),
-                    ),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    color: darkColor,
+                    size: 20,
                   ),
-
-                  const SizedBox(height: 5),
-
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF6B626D),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Use the options above to manage the examination system.',
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
 
-            const Icon(
-              Icons.arrow_forward_ios,
-              size: 18,
-              color: Color(0xFF6D597A),
-            ),
+            const SizedBox(height: 22),
+
+            _logoutButton(context),
           ],
         ),
       ),

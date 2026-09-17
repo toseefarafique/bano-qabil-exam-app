@@ -1,17 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class NotificationScreen extends StatefulWidget {
-  const NotificationScreen({super.key});
+class ControllerNotificationsScreen extends StatefulWidget {
+  const ControllerNotificationsScreen({super.key});
 
   @override
-  State<NotificationScreen> createState() => _NotificationScreenState();
+  State<ControllerNotificationsScreen> createState() =>
+      _ControllerNotificationsScreenState();
 }
 
-class _NotificationScreenState extends State<NotificationScreen> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+class _ControllerNotificationsScreenState
+    extends State<ControllerNotificationsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  String? _selectedQuizId;
+  String _selectedNotificationType = 'new_quiz';
+
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _messageController = TextEditingController();
+
+  bool _isSending = false;
 
   final Color primaryColor = const Color(0xFF6D597A);
   final Color darkColor = const Color(0xFF44364D);
@@ -19,541 +27,663 @@ class _NotificationScreenState extends State<NotificationScreen> {
   final Color backgroundColor = const Color(0xFFF8F4F0);
   final Color textColor = const Color(0xFF332D35);
 
-  Future<void> _markNotificationAsRead(String notificationId) async {
-    try {
-      await _firestore
-          .collection('notifications')
-          .doc(notificationId)
-          .update({
-        'isRead': true,
-      });
-    } catch (e) {
-      debugPrint('Error marking notification as read: $e');
+  @override
+  void initState() {
+    super.initState();
+
+    _titleController.text = 'New Quiz Available';
+    _messageController.text =
+        'A new quiz is now available. Open the app to start practicing.';
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  // ------------------------------------------------------------
+  // LOAD ONLY THE THREE REQUIRED QUIZZES
+  // ------------------------------------------------------------
+
+  Future<List<DocumentSnapshot<Map<String, dynamic>>>> _loadQuizzes() async {
+    const quizIds = ['quiz001', 'quiz002', 'quiz003'];
+
+    final results = await Future.wait(
+      quizIds.map((id) => _firestore.collection('quizzes').doc(id).get()),
+    );
+
+    return results.where((quiz) => quiz.exists).toList();
+  }
+
+  // ------------------------------------------------------------
+  // QUIZ TITLE
+  // ------------------------------------------------------------
+
+  String _getQuizTitle(DocumentSnapshot<Map<String, dynamic>> quiz) {
+    final data = quiz.data();
+
+    final title = data?['title'];
+
+    if (title != null && title.toString().trim().isNotEmpty) {
+      return title.toString().trim();
+    }
+
+    switch (quiz.id) {
+      case 'quiz001':
+        return 'Flutter';
+
+      case 'quiz002':
+        return 'Cybersecurity';
+
+      case 'quiz003':
+        return 'Web Development';
+
+      default:
+        return 'Quiz';
     }
   }
 
-  Future<void> _markAllNotificationsAsRead(String userId) async {
+  // ------------------------------------------------------------
+  // NOTIFICATION TYPE
+  // ------------------------------------------------------------
+
+  String _getNotificationTypeLabel(String type) {
+    switch (type) {
+      case 'new_quiz':
+        return 'New Quiz';
+
+      case 'exam_reminder':
+        return 'Exam Reminder';
+
+      case 'result_published':
+        return 'Result Published';
+
+      case 'quiz_closed':
+        return 'Quiz Closed';
+
+      default:
+        return 'Notification';
+    }
+  }
+
+  // ------------------------------------------------------------
+  // UPDATE DEFAULT MESSAGE WHEN TYPE CHANGES
+  // ------------------------------------------------------------
+
+  void _updateMessageForType(String type) {
+    switch (type) {
+      case 'new_quiz':
+        _titleController.text = 'New Quiz Available';
+        _messageController.text =
+            'A new quiz is now available. Open the app to start practicing.';
+        break;
+
+      case 'exam_reminder':
+        _titleController.text = 'Exam Reminder';
+        _messageController.text =
+            'Your exam is coming soon. Make sure you are prepared.';
+        break;
+
+      case 'result_published':
+        _titleController.text = 'Result Published';
+        _messageController.text = 'Your quiz result has been published. Open the app to view your result.';
+        break;
+
+      case 'quiz_closed':
+        _titleController.text = 'Quiz Closed';
+        _messageController.text =
+            'This quiz is now closed and is no longer accepting attempts.';
+        break;
+    }
+
+    setState(() {});
+  }
+
+  // ------------------------------------------------------------
+  // SEND NOTIFICATION
+  // ------------------------------------------------------------
+
+  Future<void> _sendNotification() async {
+    if (_selectedQuizId == null) {
+      _showMessage('Please select a quiz.');
+      return;
+    }
+
+    if (_titleController.text.trim().isEmpty) {
+      _showMessage('Please enter a notification title.');
+      return;
+    }
+
+    if (_messageController.text.trim().isEmpty) {
+      _showMessage('Please enter a notification message.');
+      return;
+    }
+
+    setState(() {
+      _isSending = true;
+    });
+
     try {
-      final snapshot = await _firestore
-          .collection('notifications')
-          .where('userId', isEqualTo: userId)
-          .where('isRead', isEqualTo: false)
+      final studentsSnapshot = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'Student')
           .get();
 
-      if (snapshot.docs.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('All notifications are already read.'),
-            ),
-          );
-        }
+      if (studentsSnapshot.docs.isEmpty) {
+        _showMessage('No students were found.');
+
+        setState(() {
+          _isSending = false;
+        });
+
         return;
       }
 
       final batch = _firestore.batch();
 
-      for (final doc in snapshot.docs) {
-        batch.update(doc.reference, {
-          'isRead': true,
+      for (final student in studentsSnapshot.docs) {
+        final notificationRef = _firestore.collection('notifications').doc();
+
+        batch.set(notificationRef, {
+          'userId': student.id,
+          'title': _titleController.text.trim(),
+          'message': _messageController.text.trim(),
+          'type': _selectedNotificationType,
+          'quizId': _selectedQuizId,
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
         });
       }
 
       await batch.commit();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('All notifications marked as read.'),
-          ),
-        );
-      }
+      _showMessage(
+        'Notification sent to ${studentsSnapshot.docs.length} students.',
+      );
     } catch (e) {
+      _showMessage(
+        'Failed to send notification. Please check Firebase permissions.',
+      );
+    } finally {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Unable to update notifications: $e'),
-          ),
-        );
+        setState(() {
+          _isSending = false;
+        });
       }
     }
   }
 
-  String _formatDate(dynamic timestamp) {
-    if (timestamp == null || timestamp is! Timestamp) {
-      return '';
-    }
+  // ------------------------------------------------------------
+  // MESSAGE
+  // ------------------------------------------------------------
 
-    try {
-      final date = timestamp.toDate();
+  void _showMessage(String message) {
+    if (!mounted) return;
 
-      final hour = date.hour > 12
-          ? date.hour - 12
-          : date.hour == 0
-          ? 12
-          : date.hour;
-
-      final minute = date.minute.toString().padLeft(2, '0');
-
-      final period = date.hour >= 12 ? 'PM' : 'AM';
-
-      return '${date.day}/${date.month}/${date.year} '
-          '$hour:$minute $period';
-    } catch (_) {
-      return '';
-    }
-  }
-
-  IconData _notificationIcon(String type) {
-    switch (type.toLowerCase()) {
-      case 'quiz':
-      case 'new_quiz':
-        return Icons.quiz_outlined;
-
-      case 'reminder':
-      case 'exam_reminder':
-        return Icons.alarm_outlined;
-
-      case 'result':
-      case 'result_published':
-        return Icons.emoji_events_outlined;
-
-      case 'closed':
-      case 'quiz_closed':
-      case 'exam_closed':
-        return Icons.lock_outline_rounded;
-
-      default:
-        return Icons.notifications_outlined;
-    }
-  }
-
-  Widget _buildUserNotifications(User user) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            20,
-            18,
-            20,
-            10,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Your Notifications',
-                      style: TextStyle(
-                        color: darkColor,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Stay updated with your exams and results.',
-                      style: TextStyle(
-                        color: textColor.withValues(alpha: 0.60),
-                        fontSize: 12.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  _markAllNotificationsAsRead(user.uid);
-                },
-                child: Text(
-                  'Mark all read',
-                  style: TextStyle(
-                    color: primaryColor,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        Expanded(
-          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: _firestore
-                .collection('notifications')
-                .where(
-              'userId',
-              isEqualTo: user.uid,
-            )
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(
-                    color: primaryColor,
-                  ),
-                );
-              }
-
-              if (snapshot.hasError) {
-                return _errorState();
-              }
-
-              final notifications = snapshot.data?.docs ?? [];
-
-              if (notifications.isEmpty) {
-                return _emptyNotifications();
-              }
-
-              notifications.sort((a, b) {
-                final aTime = a.data()['createdAt'];
-                final bTime = b.data()['createdAt'];
-
-                if (aTime is Timestamp && bTime is Timestamp) {
-                  return bTime.compareTo(aTime);
-                }
-
-                return 0;
-              });
-
-              return ListView.builder(
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  5,
-                  20,
-                  25,
-                ),
-                itemCount: notifications.length,
-                itemBuilder: (context, index) {
-                  final doc = notifications[index];
-                  final data = doc.data();
-
-                  final title =
-                      data['title']?.toString() ?? 'Notification';
-
-                  final message =
-                      data['message']?.toString() ??
-                          data['body']?.toString() ??
-                          '';
-
-                  final type =
-                      data['type']?.toString() ?? 'notification';
-
-                  final isRead = data['isRead'] == true;
-
-                  final date = _formatDate(
-                    data['createdAt'],
-                  );
-
-                  return _notificationCard(
-                    notificationId: doc.id,
-                    title: title,
-                    message: message,
-                    type: type,
-                    isRead: isRead,
-                    date: date,
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: darkColor,
+      ),
     );
   }
 
-  Widget _notificationCard({
-    required String notificationId,
-    required String title,
-    required String message,
-    required String type,
-    required bool isRead,
-    required String date,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        if (!isRead) {
-          _markNotificationAsRead(notificationId);
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 12),
+  // ------------------------------------------------------------
+  // QUIZ SELECTOR
+  // ------------------------------------------------------------
+
+  Widget _buildQuizSelector(
+    List<DocumentSnapshot<Map<String, dynamic>>> quizzes,
+  ) {
+    if (quizzes.isEmpty) {
+      return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isRead
-              ? Colors.white
-              : accentColor.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isRead
-                ? Colors.grey.shade200
-                : accentColor.withValues(alpha: 0.75),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                _notificationIcon(type),
-                color: primaryColor,
-                size: 25,
+            Icon(Icons.info_outline, color: primaryColor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'No quizzes found in Firebase.',
+                style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
               ),
             ),
+          ],
+        ),
+      );
+    }
 
-            const SizedBox(width: 13),
+    final validIds = ['quiz001', 'quiz002', 'quiz003'];
 
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    final sortedQuizzes = [...quizzes];
+
+    sortedQuizzes.sort((a, b) {
+      return validIds.indexOf(a.id).compareTo(validIds.indexOf(b.id));
+    });
+
+    final selectedExists = sortedQuizzes.any(
+      (quiz) => quiz.id == _selectedQuizId,
+    );
+
+    if (!selectedExists) {
+      _selectedQuizId = sortedQuizzes.first.id;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedQuizId,
+          isExpanded: true,
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+          style: TextStyle(
+            color: textColor,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+          items: sortedQuizzes.map((quiz) {
+            return DropdownMenuItem<String>(
+              value: quiz.id,
+              child: Row(
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: TextStyle(
-                            color: darkColor,
-                            fontSize: 16,
-                            fontWeight: isRead
-                                ? FontWeight.w600
-                                : FontWeight.bold,
-                          ),
-                        ),
-                      ),
-
-                      if (!isRead)
-                        Container(
-                          margin: const EdgeInsets.only(
-                            top: 5,
-                            left: 8,
-                          ),
-                          width: 9,
-                          height: 9,
-                          decoration: BoxDecoration(
-                            color: primaryColor,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                    ],
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.quiz_outlined,
+                      color: primaryColor,
+                      size: 20,
+                    ),
                   ),
-
-                  if (message.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      message,
-                      style: TextStyle(
-                        color: textColor.withValues(alpha: 0.75),
-                        fontSize: 13.5,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-
-                  if (date.isNotEmpty) ...[
-                    const SizedBox(height: 9),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 13,
-                          color: textColor.withValues(alpha: 0.45),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          date,
-                          style: TextStyle(
-                            color: textColor.withValues(alpha: 0.55),
-                            fontSize: 11.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  const SizedBox(width: 12),
+                  Text(_getQuizTitle(quiz)),
                 ],
               ),
-            ),
-          ],
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedQuizId = value;
+            });
+          },
         ),
       ),
     );
   }
 
-  Widget _emptyNotifications() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.10),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.notifications_none_rounded,
-                size: 55,
-                color: primaryColor.withValues(alpha: 0.65),
-              ),
+  // ------------------------------------------------------------
+  // NOTIFICATION TYPE SELECTOR
+  // ------------------------------------------------------------
+
+  Widget _buildNotificationTypeSelector() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedNotificationType,
+          isExpanded: true,
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor),
+          style: TextStyle(
+            color: textColor,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+          items: const [
+            DropdownMenuItem(value: 'new_quiz', child: Text('New Quiz')),
+            DropdownMenuItem(
+              value: 'exam_reminder',
+              child: Text('Exam Reminder'),
             ),
-
-            const SizedBox(height: 20),
-
-            Text(
-              'No Notifications',
-              style: TextStyle(
-                color: darkColor,
-                fontSize: 21,
-                fontWeight: FontWeight.bold,
-              ),
+            DropdownMenuItem(
+              value: 'result_published',
+              child: Text('Result Published'),
             ),
-
-            const SizedBox(height: 8),
-
-            Text(
-              'New quizzes, exam reminders and results '
-                  'will appear here.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: textColor.withValues(alpha: 0.65),
-                height: 1.5,
-                fontSize: 13.5,
-              ),
-            ),
+            DropdownMenuItem(value: 'quiz_closed', child: Text('Quiz Closed')),
           ],
+          onChanged: (value) {
+            if (value == null) return;
+
+            setState(() {
+              _selectedNotificationType = value;
+            });
+
+            _updateMessageForType(value);
+          },
         ),
       ),
     );
   }
 
-  Widget _loginRequiredState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.account_circle_outlined,
-              size: 70,
-              color: primaryColor.withValues(alpha: 0.55),
-            ),
+  // ------------------------------------------------------------
+  // TEXT FIELD
+  // ------------------------------------------------------------
 
-            const SizedBox(height: 15),
-
-            Text(
-              'Please Login First',
-              style: TextStyle(
-                color: darkColor,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            Text(
-              'You need to be logged in to view your notifications.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: textColor.withValues(alpha: 0.65),
-                height: 1.4,
-              ),
-            ),
-          ],
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      style: TextStyle(color: textColor, fontSize: 14),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        labelStyle: TextStyle(color: primaryColor, fontWeight: FontWeight.w600),
+        hintStyle: TextStyle(color: Colors.grey.shade400),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 15,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: primaryColor, width: 1.5),
         ),
       ),
     );
   }
 
-  Widget _errorState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(25),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.cloud_off_rounded,
-              size: 60,
-              color: primaryColor.withValues(alpha: 0.55),
-            ),
-            const SizedBox(height: 15),
-            Text(
-              'Unable to load notifications.',
-              style: TextStyle(
-                color: darkColor,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Please check your internet connection and try again.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: textColor.withValues(alpha: 0.60),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // ------------------------------------------------------------
+  // BUILD
+  // ------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
+        elevation: 0,
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        elevation: 0,
         title: const Text(
           'Notifications',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
+        centerTitle: false,
       ),
-      body: StreamBuilder<User?>(
-        stream: _auth.authStateChanges(),
+      body: FutureBuilder<List<DocumentSnapshot<Map<String, dynamic>>>>(
+        future: _loadQuizzes(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
             return Center(
-              child: CircularProgressIndicator(
-                color: primaryColor,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Unable to load quizzes.\nPlease check your Firebase connection and rules.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: textColor, fontSize: 15),
+                ),
               ),
             );
           }
 
-          final user = snapshot.data;
+          final quizzes = snapshot.data ?? [];
 
-          if (user == null) {
-            return _loginRequiredState();
-          }
+          return SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 30),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ------------------------------------------------
+                // HEADER CARD
+                // ------------------------------------------------
 
-          return _buildUserNotifications(user);
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: darkColor,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: accentColor.withOpacity(0.25),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: const Icon(
+                          Icons.notifications_active_outlined,
+                          color: Colors.white,
+                          size: 27,
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Send Notifications',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 19,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              'Notify students about quizzes, exams and results.',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.78),
+                                fontSize: 13,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 22),
+
+                // ------------------------------------------------
+                // QUIZ SELECTION
+                // ------------------------------------------------
+                Text(
+                  'Select Quiz',
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 9),
+
+                _buildQuizSelector(quizzes),
+
+                const SizedBox(height: 20),
+
+                // ------------------------------------------------
+                // NOTIFICATION TYPE
+                // ------------------------------------------------
+                Text(
+                  'Notification Type',
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 9),
+
+                _buildNotificationTypeSelector(),
+
+                const SizedBox(height: 20),
+
+                // ------------------------------------------------
+                // NOTIFICATION DETAILS CARD
+                // ------------------------------------------------
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.edit_note_rounded,
+                            color: primaryColor,
+                            size: 23,
+                          ),
+                          const SizedBox(width: 9),
+                          Text(
+                            'Notification Details',
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      _buildTextField(
+                        controller: _titleController,
+                        label: 'Title',
+                        hint: 'Enter notification title',
+                      ),
+
+                      const SizedBox(height: 15),
+
+                      _buildTextField(
+                        controller: _messageController,
+                        label: 'Message',
+                        hint: 'Enter notification message',
+                        maxLines: 4,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 22),
+
+                // ------------------------------------------------
+                // SEND BUTTON
+                // ------------------------------------------------
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    onPressed: _isSending ? null : _sendNotification,
+                    icon: _isSending
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.send_rounded, size: 20),
+                    label: Text(
+                      _isSending ? 'Sending...' : 'Send Notification',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: primaryColor.withOpacity(0.6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // ------------------------------------------------
+                // INFO
+                // ------------------------------------------------
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        color: primaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'The notification will be sent to all registered students.',
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 12.5,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
         },
       ),
     );

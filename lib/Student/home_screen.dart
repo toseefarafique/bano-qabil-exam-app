@@ -1,9 +1,10 @@
-import 'package:bano_qabil_exam/Student/History.dart';
-import 'package:bano_qabil_exam/Student/Upcoming_Exam.dart';
-import 'package:bano_qabil_exam/Student/profile_user.dart';
+import 'History.dart';
+import 'Upcoming_Exam.dart';
+import 'profile_user.dart';
 import 'package:flutter/material.dart';
 import 'select_subject.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,39 +14,83 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  
+  Stream<QuerySnapshot> getSubjects() {
+  return FirebaseFirestore.instance
+      .collection('subject')
+      .snapshots();
+}
+  Future<String> getStudentName() async {
+  User? user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    return "Student";
+  }
+
+  DocumentSnapshot studentData = await FirebaseFirestore.instance
+      .collection('student')
+      .doc(user.uid)
+      .get();
+
+  if (studentData.exists) {
+    return studentData['name'] ?? "Student";
+  }
+
+  return "Student";
+}
+Future<String> getLastScore() async {
+  User? user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) return "0%";
+
+  QuerySnapshot result = await FirebaseFirestore.instance
+      .collection('result')
+      .where('studentId', isEqualTo: user.uid)
+      .limit(1)
+      .get();
+
+  if (result.docs.isEmpty) return "0%";
+
+  var data = result.docs.first.data() as Map<String, dynamic>;
+
+  int score = data['score'] ?? 0;
+  int total = data['totalQuestion'] ?? 0;
+
+  if (total == 0) return "0%";
+
+  return "${((score / total) * 100).round()}%";
+}
+Future<String> getPracticeStreak() async {
+  User? user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) return "0 Days";
+
+  QuerySnapshot result = await FirebaseFirestore.instance
+      .collection('result')
+      .where('studentId', isEqualTo: user.uid)
+      .get();
+
+  if (result.docs.isEmpty) return "0 Days";
+
+  Set<String> days = {};
+
+  for (var doc in result.docs) {
+    var data = doc.data() as Map<String, dynamic>;
+
+    if (data['date'] != null) {
+      Timestamp timestamp = data['date'];
+      DateTime date = timestamp.toDate();
+
+      days.add("${date.year}-${date.month}-${date.day}");
+    }
+  }
+
+  return "${days.length} Days";
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    // appBar: AppBar(
-    //    backgroundColor: Color(0xFF6F435C),
-    //   leading: IconButton(onPressed: (){
-    //     Navigator.pop(context);
-    //   },
-    //    icon: Icon(Icons.arrow_back,
-    //    size: 30,
-    //    color: Color(0xFFFFFBF0),)),
      
-    //   title: 
-    //    Text("Bano Qabil Exam",
-    //   style: TextStyle(
-    //     color:  Color(0xFFFFFBF0),
-    //     fontWeight: FontWeight.bold,
-    //     fontSize: 30,
-    //   ),
-      
-    // ),
-     
-    //   actions: [
-    //     Padding(padding: EdgeInsets.only(right: 10),
-    //     child:IconButton(onPressed: (){
-
-    //     },
-    //      icon: Icon(Icons.notifications,
-    //      size: 35,
-    //      color:Color(0xFFFFFBF0),))
-    //     ),
-    //   ],
-    // ),
     body: SingleChildScrollView(
 
       child: Container(
@@ -156,12 +201,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontSize: 15,
                       
                     ),),
-                    Text("Ayesha Khan",
-                    style: TextStyle(
-                      color: Color(0xFF6F435C),
-                      fontSize: 25,
-                      fontWeight: FontWeight.bold,
-                    ),),
+                    FutureBuilder<String>(
+                       future: getStudentName(),
+                        builder: (context, snapshot) {
+                        return Text(
+                       snapshot.data ?? "Student",
+                      style: TextStyle(
+                       color: Color(0xFF6F435C),
+                       fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      );
+                      },
+                     ),
+                   
                     Text("Keep going! you're doing great!",
                     style: TextStyle(
                       color: Color(0xFF6F435C),
@@ -266,13 +319,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                 ),),
-                
-               Text("80%",
-                style: TextStyle(
-                   color: Color(0xFF6F435C),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
-                ),),  
+                FutureBuilder<String>(
+  future: getLastScore(),
+  builder: (context, snapshot) {
+    return Text(
+      snapshot.data ?? "0%",
+      style: TextStyle(
+        color: Color(0xFF6F435C),
+        fontWeight: FontWeight.bold,
+        fontSize: 22,
+      ),
+    );
+  },
+),
+             
 
               ],
             )      
@@ -301,13 +361,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontSize: 20,
                 ),),
                
-               Text("5 Days",
-                style: TextStyle(
-                   color: Color(0xFF6F435C),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
-                ),),  
-              
+              FutureBuilder<String>(
+                 future: getPracticeStreak(),
+                      builder: (context, snapshot) {
+                     return Text(
+                   snapshot.data ?? "0 Days",
+                      style: TextStyle(
+                       color: Color(0xFF6F435C),
+                       fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                  ),
+                  );
+                       },
+                       ),
               ],
             )      
                 ],
@@ -327,233 +393,103 @@ class _HomeScreenState extends State<HomeScreen> {
       ),)
       
       ),
-       Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Card(
-               
-              elevation: 3,
-              color: Colors.white,
-             child: InkWell(
-                 onTap: () {
-                   Navigator.push(context,
-                    MaterialPageRoute(builder: (context)=> SelectSubject()));
-                 },
-              child: Container(
-              width: 200,
-              
-               child: Padding(padding: EdgeInsets.all(10),
-              child: Row(
-                children: [
-                  Icon(Icons.flutter_dash,
-                  
-                  size: 35,
-                  color: Color(0xFF6F435C),),
-                  SizedBox(width: 25),
-            Column(
-              children: [
-                Text("Flutter",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),),
-               Text("3 Quizes",
-                style: TextStyle(
-                   color: Colors.black38,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),),  
+ 
+            StreamBuilder<QuerySnapshot>(
+  stream: getSubjects(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
-              ],
-            )      
-                ],
-              ),
-             ),),
-             ), 
-             
-            ),
-            SizedBox(width: 30),
-            Card(
-               elevation: 5,
-              color: Colors.white,
+    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+      return const Center(
+        child: Text("No Subjects Available"),
+      );
+    }
+
+    return Wrap(
+      children: snapshot.data!.docs.map((doc) {
+        var data = doc.data() as Map<String, dynamic>;
+
+        String name = data['name'] ?? "Subject";
+        int quizCount = data['quizCount'] ?? 0;
+
+        IconData icon = Icons.book;
+
+        if (name == "Flutter") {
+          icon = Icons.flutter_dash;
+        } else if (name == "Web") {
+          icon = Icons.web;
+        } else if (name == "Cybersecurity") {
+          icon = Icons.security;
+        }
+
+        return Card(
+          elevation: 3,
+          color: Colors.white,
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>  SelectSubject(
+                    subjectName: name,
+                     subjectId: doc.id,
+                  ),
+                ),
+              );
+            },
             child: Container(
               width: 200,
-              
-              child: Padding(padding: EdgeInsets.all(10),
+              padding: const EdgeInsets.all(10),
               child: Row(
                 children: [
-                  Icon(Icons.web_asset_sharp,
-                  size: 35,
-                  color: Colors.deepPurple),
-                  SizedBox(width: 30),
-            Column(
-              children: [
-                Text("Web",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),),
-               Text("2 Quizes",
-                style: TextStyle(
-                   color: Colors.black38,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),),  
-              
-              ],
-            )      
-                ],
-              ),),
-            ),
-            )
-          ],
-        ), 
-         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Card(
-              elevation: 3,
-              color: Colors.white,
-             child: Container(
-              width: 200,
-               child: Padding(padding: EdgeInsets.all(10),
-              child: Row(
-                children: [
-                  Icon(Icons.security,
-                  size: 35,
-                  color: Colors.blueAccent),
-                  SizedBox(width: 20),
-            Column(
-              children: [
-                Text("Cybersecurity",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),),
-               Text("2 Quizes",
-                style: TextStyle(
-                   color: Colors.black38,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),),  
-
-              ],
-            )      
+                  Icon(
+                    icon,
+                    size: 35,
+                    color: const Color(0xFF6F435C),
+                  ),
+                  const SizedBox(width: 20),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                      Text(
+                        "$quizCount Quizes",
+                        style: const TextStyle(
+                          color: Colors.black38,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-             ),),
             ),
-            SizedBox(width: 30),
-            Card(
-               elevation: 5,
-              color: Colors.white,
-            child: Container(
-              width: 200,
-              
-              child: Padding(padding: EdgeInsets.all(10),
-              child: Row(
-                children: [
-                  Icon(Icons.whatshot,
-                  size: 35,
-                  color: Colors.deepOrange),
-            Column(
-              children: [
-                Text("Practice Streak",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),),
-               Text("5 Days",
-                style: TextStyle(
-                   color: Colors.black38,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),),  
-              
-              ],
-            )      
-                ],
-              ),),
-            ),
-            )
-          ],
-        ),
-         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Card(
-              elevation: 3,
-              color: Colors.white,
-             child: Container(
-              width: 200,
-               child: Padding(padding: EdgeInsets.all(10),
-              child: Row(
-                children: [
-                  Icon(Icons.arrow_downward,
-                  size: 30,
-                  color: Color(0xFF6F435C),),
-                  SizedBox(width: 10),
-            Column(
-              children: [
-                Text("Last Score",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),),
-               Text("80%",
-                style: TextStyle(
-                   color: Colors.black38,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),),  
-
-              ],
-            )      
-                ],
-              ),
-             ),),
-            ),
-            SizedBox(width: 30),
-            Card(
-               elevation: 5,
-              color: Colors.white,
-            child: Container(
-              width: 200,
-              
-              child: Padding(padding: EdgeInsets.all(15),
-              child: Row(
-                children: [
-                  Icon(Icons.local_fire_department,
-                  size: 30,
-                  color: Colors.deepOrange),
-            Column(
-              children: [
-                Text("Practice Streak",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),),
-               Text("5 Days",
-                style: TextStyle(
-                   color: Color(0xFF6F435C),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
-                ),),  
-              
-              ],
-            )      
-                ],
-              ),),
-            ),
-            )
-          ],
-        ), 
+          ),
+        );
+      }).toList(),
+    );
+  },
+),
+         
         ], 
      ),
-      ),
-     
+      
+        
+      )
     ),
-        bottomNavigationBar: BottomNavigationBar(
+    
+     bottomNavigationBar: BottomNavigationBar(
       currentIndex: 0,
       onTap: (index){
         if(index ==1){

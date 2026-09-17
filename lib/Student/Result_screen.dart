@@ -1,9 +1,16 @@
-import 'package:bano_qabil_exam/Student/Review_Answer.dart';
-import 'package:bano_qabil_exam/Student/home_screen.dart';
+import 'Review_Answer.dart';
+import 'home_screen.dart';
 import 'package:flutter/material.dart';
 
 class ResultScreen extends StatefulWidget {
-  const ResultScreen({super.key});
+  final int score;
+  final int totalQuestions;
+
+  const ResultScreen({
+    super.key,
+    required this.score,
+    required this.totalQuestions,
+});
 
   @override
   State<ResultScreen> createState() => _ResultScreenState();
