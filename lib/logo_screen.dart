@@ -3,6 +3,7 @@ import 'package:bano_qabil_exam/controller/controller_dashboard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'teacher/teacher_dashboard.dart';
 
 class LogoScreen extends StatefulWidget {
   const LogoScreen({super.key});
@@ -13,16 +14,243 @@ class LogoScreen extends StatefulWidget {
 
 class _LogoScreenState extends State<LogoScreen> {
   int selectedTab = 0;
+
   final _formKey = GlobalKey<FormState>();
+
   bool _obscurePassword = true;
-  final TextEditingController _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+
+  final TextEditingController _passwordController =
+      TextEditingController();
+
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
+  final TextEditingController emailController =
+      TextEditingController();
+
+  final TextEditingController passwordController =
+      TextEditingController();
+
+  final TextEditingController nameController =
+      TextEditingController();
+
+  final TextEditingController registerEmailController =
+      TextEditingController();
+
   String selectedRole = "";
 
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController registerEmailController = TextEditingController();
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    nameController.dispose();
+    registerEmailController.dispose();
+
+    super.dispose();
+  }
+
+  // ================= LOGIN FUNCTION =================
+
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    try {
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      if (!mounted) return;
+
+      if (!userDoc.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("User profile not found"),
+          ),
+        );
+        return;
+      }
+
+      final data = userDoc.data();
+
+      final role = data?['role'];
+
+      // ================= TEACHER =================
+
+      if (role == "Teacher") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const TeacherDashboard(),
+          ),
+        );
+      }
+
+      // ================= CONTROLLER =================
+
+      else if (role == "Controller") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ControllerDashboard(),
+          ),
+        );
+      }
+
+      // ================= STUDENT =================
+
+      else if (role == "Student") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(),
+          ),
+        );
+      }
+
+      // ================= INVALID ROLE =================
+
+      else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Invalid user role"),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = "Login failed";
+
+      if (e.code == 'user-not-found') {
+        message = "No account found with this email";
+      } else if (e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
+        message = "Invalid email or password";
+      } else if (e.code == 'invalid-email') {
+        message = "Please enter a valid email";
+      }
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Something went wrong"),
+        ),
+      );
+    }
+  }
+
+  // ================= REGISTER FUNCTION =================
+
+  Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (selectedRole.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select a role first"),
+        ),
+      );
+
+      return;
+    }
+
+    try {
+      UserCredential userCredential =
+          await FirebaseAuth.instance
+              .createUserWithEmailAndPassword(
+        email: registerEmailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+        'name': nameController.text.trim(),
+        'email': registerEmailController.text.trim(),
+        'role': selectedRole,
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Registration successful!"),
+        ),
+      );
+
+      // After registration go to correct dashboard
+      if (selectedRole == "Teacher") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const TeacherDashboard(),
+          ),
+        );
+      } else if (selectedRole == "Controller") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ControllerDashboard(),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = "Registration failed";
+
+      if (e.code == 'email-already-in-use') {
+        message = "This email is already registered";
+      } else if (e.code == 'weak-password') {
+        message = "Password is too weak";
+      } else if (e.code == 'invalid-email') {
+        message = "Please enter a valid email";
+      }
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Something went wrong"),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,12 +259,15 @@ class _LogoScreenState extends State<LogoScreen> {
           color: const Color(0xFFFFFBF0),
           child: Column(
             children: [
+              // ================= LOGO / TITLE =================
+
               Center(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    SizedBox(height: 10),
-                    Text(
+                    const SizedBox(height: 10),
+
+                    const Text(
                       "Bano Qabil",
                       style: TextStyle(
                         color: Color(0xFF6F435C),
@@ -44,7 +275,8 @@ class _LogoScreenState extends State<LogoScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
+
+                    const Text(
                       "Exam",
                       style: TextStyle(
                         color: Color(0xFF6F435C),
@@ -52,7 +284,8 @@ class _LogoScreenState extends State<LogoScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
+
+                    const Text(
                       "Test your knowledge",
                       style: TextStyle(
                         color: Color(0xFF6F435C),
@@ -60,7 +293,8 @@ class _LogoScreenState extends State<LogoScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
+
+                    const Text(
                       "Build your Future",
                       style: TextStyle(
                         color: Color(0xFF6F435C),
@@ -68,6 +302,7 @@ class _LogoScreenState extends State<LogoScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     Image.asset(
                       'assets/images/book_logo1.png',
                       height: 110,
@@ -77,21 +312,31 @@ class _LogoScreenState extends State<LogoScreen> {
                   ],
                 ),
               ),
+
+              // ================= LOGIN / REGISTER TABS =================
+
               Padding(
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
+                    // LOGIN TAB
                     Expanded(
                       child: GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          setState(() {
+                            selectedTab = 0;
+                          });
+                        },
                         child: Container(
                           height: 45,
                           decoration: BoxDecoration(
                             color: selectedTab == 0
-                                ? Color(0xFF6F435C)
+                                ? const Color(0xFF6F435C)
                                 : Colors.white,
                             borderRadius: BorderRadius.circular(10),
-                            border: BoxBorder.all(color: Color(0xFF6F435C)),
+                            border: Border.all(
+                              color: const Color(0xFF6F435C),
+                            ),
                           ),
                           child: Center(
                             child: Text(
@@ -99,7 +344,7 @@ class _LogoScreenState extends State<LogoScreen> {
                               style: TextStyle(
                                 color: selectedTab == 0
                                     ? Colors.white
-                                    : Color(0xFF6F435C),
+                                    : const Color(0xFF6F435C),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -107,7 +352,10 @@ class _LogoScreenState extends State<LogoScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 15),
+
+                    const SizedBox(width: 15),
+
+                    // REGISTER TAB
                     Expanded(
                       child: GestureDetector(
                         onTap: () {
@@ -119,10 +367,12 @@ class _LogoScreenState extends State<LogoScreen> {
                           height: 45,
                           decoration: BoxDecoration(
                             color: selectedTab == 1
-                                ? Color(0xFF6F435C)
+                                ? const Color(0xFF6F435C)
                                 : Colors.white,
                             borderRadius: BorderRadius.circular(10),
-                            border: BoxBorder.all(color: Color(0xFF6F435C)),
+                            border: Border.all(
+                              color: const Color(0xFF6F435C),
+                            ),
                           ),
                           child: Center(
                             child: Text(
@@ -130,7 +380,7 @@ class _LogoScreenState extends State<LogoScreen> {
                               style: TextStyle(
                                 color: selectedTab == 1
                                     ? Colors.white
-                                    : Color(0xFF6F435C),
+                                    : const Color(0xFF6F435C),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -141,6 +391,11 @@ class _LogoScreenState extends State<LogoScreen> {
                   ],
                 ),
               ),
+
+              // =========================================================
+              // LOGIN FORM
+              // =========================================================
+
               if (selectedTab == 0)
                 Container(
                   child: Column(
@@ -148,10 +403,15 @@ class _LogoScreenState extends State<LogoScreen> {
                       Form(
                         key: _formKey,
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
                           children: [
-                            Padding(
-                              padding: EdgeInsets.only(top: 8, left: 15),
+                            // EMAIL
+                            const Padding(
+                              padding: EdgeInsets.only(
+                                top: 8,
+                                left: 15,
+                              ),
                               child: Text(
                                 "Email:",
                                 style: TextStyle(
@@ -162,39 +422,57 @@ class _LogoScreenState extends State<LogoScreen> {
                             ),
 
                             Padding(
-                              padding: EdgeInsets.only(left: 25, right: 25),
+                              padding: const EdgeInsets.only(
+                                left: 25,
+                                right: 25,
+                              ),
                               child: TextFormField(
                                 controller: emailController,
                                 autovalidateMode:
-                                    AutovalidateMode.onUserInteraction,
+                                    AutovalidateMode
+                                        .onUserInteraction,
                                 validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
+                                  if (value == null ||
+                                      value.trim().isEmpty) {
                                     return 'Please enter a valid email';
                                   }
+
                                   if (!value.contains('@')) {
                                     return 'Please enter a valid email';
                                   }
+
                                   return null;
                                 },
-
-                                keyboardType: TextInputType.emailAddress,
+                                keyboardType:
+                                    TextInputType.emailAddress,
                                 decoration: InputDecoration(
                                   hintText: "Enter your Email",
-                                  prefixIcon: Icon(
+                                  prefixIcon: const Icon(
                                     Icons.email,
                                     color: Color(0xFF6F435C),
                                   ),
                                   filled: true,
-                                  fillColor: Color.fromARGB(255, 255, 227, 243),
+                                  fillColor: const Color.fromARGB(
+                                    255,
+                                    255,
+                                    227,
+                                    243,
+                                  ),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius:
+                                        BorderRadius.circular(10),
                                     borderSide: BorderSide.none,
                                   ),
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: EdgeInsets.only(left: 15, top: 8),
+
+                            // PASSWORD
+                            const Padding(
+                              padding: EdgeInsets.only(
+                                left: 15,
+                                top: 8,
+                              ),
                               child: Text(
                                 "Password:",
                                 style: TextStyle(
@@ -205,26 +483,31 @@ class _LogoScreenState extends State<LogoScreen> {
                             ),
 
                             Padding(
-                              padding: EdgeInsets.only(left: 25, right: 25),
-
+                              padding: const EdgeInsets.only(
+                                left: 25,
+                                right: 25,
+                              ),
                               child: TextFormField(
                                 controller: passwordController,
                                 autovalidateMode:
-                                    AutovalidateMode.onUserInteraction,
+                                    AutovalidateMode
+                                        .onUserInteraction,
                                 validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
+                                  if (value == null ||
+                                      value.trim().isEmpty) {
                                     return 'Enter your Password';
                                   }
+
                                   if (value.length < 6) {
                                     return 'Password must be at least 6 characters';
                                   }
+
                                   return null;
                                 },
-
                                 obscureText: _obscurePassword,
                                 decoration: InputDecoration(
                                   hintText: "Enter your Password",
-                                  prefixIcon: Icon(
+                                  prefixIcon: const Icon(
                                     Icons.lock_outline,
                                     color: Color(0xFF6F435C),
                                   ),
@@ -233,29 +516,37 @@ class _LogoScreenState extends State<LogoScreen> {
                                       _obscurePassword
                                           ? Icons.visibility_outlined
                                           : Icons.visibility_off_outlined,
-                                      color: Color(0xFF6F435C),
+                                      color: const Color(0xFF6F435C),
                                     ),
                                     onPressed: () {
                                       setState(() {
-                                        _obscurePassword = !_obscurePassword;
+                                        _obscurePassword =
+                                            !_obscurePassword;
                                       });
                                     },
                                   ),
-
                                   filled: true,
-                                  fillColor: Color.fromARGB(255, 255, 227, 243),
+                                  fillColor: const Color.fromARGB(
+                                    255,
+                                    255,
+                                    227,
+                                    243,
+                                  ),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius:
+                                        BorderRadius.circular(10),
                                     borderSide: BorderSide.none,
                                   ),
                                 ),
                               ),
                             ),
+
+                            // FORGOT PASSWORD
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(
                                 onPressed: () {},
-                                child: Text(
+                                child: const Text(
                                   "Forget Password?",
                                   style: TextStyle(
                                     color: Color(0xFF6F435C),
@@ -264,75 +555,32 @@ class _LogoScreenState extends State<LogoScreen> {
                                 ),
                               ),
                             ),
+
+                            // LOGIN BUTTON
                             Padding(
-                              padding: EdgeInsets.only(left: 20, right: 20),
-                              child: Align(
-                                alignment: AlignmentGeometry.center,
-                                child: ElevatedButton(
-                                  onPressed: () async {
-                                    if (_formKey.currentState!.validate()) {
-                                      try {
-                                        await FirebaseAuth.instance
-                                            .signInWithEmailAndPassword(
-                                              email: emailController.text
-                                                  .trim(),
-                                              password: passwordController.text
-                                                  .trim(),
-                                            );
-
-                                        if (!mounted) return;
-
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const HomeScreen(),
-                                          ),
-                                        );
-                                      } on FirebaseAuthException catch (e) {
-                                        String message = "Login failed";
-
-                                        if (e.code == 'user-not-found') {
-                                          message = "No account found with this email";
-                                        } else if (e.code == 'wrong-password' ||
-                                            e.code == 'invalid-credential') {
-                                          message = "Invalid email or password";
-                                        } else if (e.code == 'invalid-email') {
-                                          message =
-                                              "Please enter a valid email";
-                                        }
-
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                              SnackBar(content: Text(message)),
-                                            );
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  "Something went wrong",
-                                                ),
-                                              ),
-                                            );
-                                      }
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Color(0xFF6F435C),
-                                    foregroundColor: Colors.white,
-                                    minimumSize: Size(double.infinity, 52),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
+                              padding: const EdgeInsets.only(
+                                left: 20,
+                                right: 20,
+                              ),
+                              child: ElevatedButton(
+                                onPressed: _login,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      const Color(0xFF6F435C),
+                                  foregroundColor: Colors.white,
+                                  minimumSize:
+                                      const Size(double.infinity, 52),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(18),
                                   ),
-                                  child: Text(
-                                    "Login",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 25,
-                                    ),
+                                ),
+                                child: const Text(
+                                  "Login",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 25,
                                   ),
                                 ),
                               ),
@@ -343,16 +591,26 @@ class _LogoScreenState extends State<LogoScreen> {
                     ],
                   ),
                 )
+
+              // =========================================================
+              // REGISTER FORM
+              // =========================================================
+
               else
                 Container(
                   child: Form(
                     key: _formKey,
                     child: Padding(
-                      padding: EdgeInsets.only(left: 18, top: 5, right: 18),
+                      padding: const EdgeInsets.only(
+                        left: 18,
+                        top: 5,
+                        right: 18,
+                      ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             "Please Register to Continue",
                             style: TextStyle(
                               color: Color(0xFF6F435C),
@@ -360,7 +618,8 @@ class _LogoScreenState extends State<LogoScreen> {
                             ),
                           ),
 
-                          Text(
+                          // FULL NAME
+                          const Text(
                             "Full Name:",
                             style: TextStyle(
                               color: Color(0xFF6F435C),
@@ -368,34 +627,45 @@ class _LogoScreenState extends State<LogoScreen> {
                               fontSize: 18,
                             ),
                           ),
-                          SizedBox(height: 5),
+
+                          const SizedBox(height: 5),
+
                           TextFormField(
-                            controller: registerEmailController,
+                            controller: nameController,
                             validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please enter a valid email';
+                              if (value == null ||
+                                  value.trim().isEmpty) {
+                                return 'Please enter your full name';
                               }
+
                               return null;
                             },
-
                             keyboardType: TextInputType.name,
                             decoration: InputDecoration(
                               hintText: "Enter your full name",
-                              prefixIcon: Icon(
+                              prefixIcon: const Icon(
                                 Icons.person,
                                 color: Color(0xFF6F435C),
                               ),
                               filled: true,
-                              fillColor: Color.fromARGB(255, 255, 227, 243),
+                              fillColor: const Color.fromARGB(
+                                255,
+                                255,
+                                227,
+                                243,
+                              ),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius:
+                                    BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
                           ),
 
-                          SizedBox(height: 15),
-                          Text(
+                          const SizedBox(height: 15),
+
+                          // EMAIL
+                          const Text(
                             "Email:",
                             style: TextStyle(
                               color: Color(0xFF6F435C),
@@ -403,35 +673,48 @@ class _LogoScreenState extends State<LogoScreen> {
                               fontSize: 18,
                             ),
                           ),
+
                           TextFormField(
+                            controller: registerEmailController,
                             validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
+                              if (value == null ||
+                                  value.trim().isEmpty) {
                                 return 'Please enter a valid email';
                               }
+
                               if (!value.contains('@')) {
-                                return 'Please anter a valid email';
+                                return 'Please enter a valid email';
                               }
+
                               return null;
                             },
-
-                            keyboardType: TextInputType.emailAddress,
+                            keyboardType:
+                                TextInputType.emailAddress,
                             decoration: InputDecoration(
                               hintText: "Enter your Email",
-                              prefixIcon: Icon(
+                              prefixIcon: const Icon(
                                 Icons.email_outlined,
                                 color: Color(0xFF6F435C),
                               ),
                               filled: true,
-                              fillColor: Color.fromARGB(255, 255, 227, 243),
+                              fillColor: const Color.fromARGB(
+                                255,
+                                255,
+                                227,
+                                243,
+                              ),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius:
+                                    BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
                           ),
 
-                          SizedBox(height: 15),
-                          Text(
+                          const SizedBox(height: 15),
+
+                          // PASSWORD
+                          const Text(
                             "Password:",
                             style: TextStyle(
                               color: Color(0xFF6F435C),
@@ -439,21 +722,25 @@ class _LogoScreenState extends State<LogoScreen> {
                               fontSize: 18,
                             ),
                           ),
+
                           TextFormField(
+                            controller: _passwordController,
                             validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
+                              if (value == null ||
+                                  value.trim().isEmpty) {
                                 return 'Enter your Password';
                               }
+
                               if (value.length < 6) {
                                 return 'Password must be at least 6 characters';
                               }
+
                               return null;
                             },
-                            controller: _passwordController,
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               hintText: "Enter your Password",
-                              prefixIcon: Icon(
+                              prefixIcon: const Icon(
                                 Icons.lock_outline,
                                 color: Color(0xFF6F435C),
                               ),
@@ -462,26 +749,34 @@ class _LogoScreenState extends State<LogoScreen> {
                                   _obscurePassword
                                       ? Icons.visibility_outlined
                                       : Icons.visibility_off_outlined,
-                                  color: Color(0xFF6F435C),
+                                  color: const Color(0xFF6F435C),
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _obscurePassword = !_obscurePassword;
+                                    _obscurePassword =
+                                        !_obscurePassword;
                                   });
                                 },
                               ),
-
                               filled: true,
-                              fillColor: Color.fromARGB(255, 255, 227, 243),
+                              fillColor: const Color.fromARGB(
+                                255,
+                                255,
+                                227,
+                                243,
+                              ),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius:
+                                    BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
                           ),
 
-                          SizedBox(height: 15),
-                          Text(
+                          const SizedBox(height: 15),
+
+                          // CONFIRM PASSWORD
+                          const Text(
                             "Confirm Password:",
                             style: TextStyle(
                               color: Color(0xFF6F435C),
@@ -489,21 +784,26 @@ class _LogoScreenState extends State<LogoScreen> {
                               fontSize: 18,
                             ),
                           ),
+
                           TextFormField(
+                            controller: _confirmPasswordController,
                             validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
+                              if (value == null ||
+                                  value.trim().isEmpty) {
                                 return 'Enter your Password';
                               }
-                              if (value != _passwordController.text) {
+
+                              if (value !=
+                                  _passwordController.text) {
                                 return 'Password do not match';
                               }
+
                               return null;
                             },
-                            controller: _confirmPasswordController,
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               hintText: "Confirm your Password",
-                              prefixIcon: Icon(
+                              prefixIcon: const Icon(
                                 Icons.lock_outline,
                                 color: Color(0xFF6F435C),
                               ),
@@ -512,107 +812,48 @@ class _LogoScreenState extends State<LogoScreen> {
                                   _obscurePassword
                                       ? Icons.visibility_outlined
                                       : Icons.visibility_off_outlined,
-                                  color: Color(0xFF6F435C),
+                                  color: const Color(0xFF6F435C),
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _obscurePassword = !_obscurePassword;
+                                    _obscurePassword =
+                                        !_obscurePassword;
                                   });
                                 },
                               ),
-
                               filled: true,
-                              fillColor: Color.fromARGB(255, 255, 227, 243),
+                              fillColor: const Color.fromARGB(
+                                255,
+                                255,
+                                227,
+                                243,
+                              ),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius:
+                                    BorderRadius.circular(10),
                                 borderSide: BorderSide.none,
                               ),
                             ),
                           ),
-                          SizedBox(height: 20),
+
+                          const SizedBox(height: 20),
+
+                          // REGISTER BUTTON
                           ElevatedButton(
-                            onPressed: () async {
-                              if (_formKey.currentState!.validate()) {
-                                if (selectedRole.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "Please select a role first",
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                try {
-                                  UserCredential userCredential =
-                                      await FirebaseAuth.instance
-                                          .createUserWithEmailAndPassword(
-                                            email: registerEmailController.text
-                                                .trim(),
-                                            password: _passwordController.text
-                                                .trim(),
-                                          );
-
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(userCredential.user!.uid)
-                                      .set({
-                                        'name': nameController.text.trim(),
-                                        'email': registerEmailController.text
-                                            .trim(),
-                                        'role': selectedRole,
-                                      });
-
-                                  if (!mounted) return;
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text("Registration successful!"),
-                                    ),
-                                  );
-
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const HomeScreen(),
-                                    ),
-                                  );
-                                } on FirebaseAuthException catch (e) {
-                                  String message = "Registration failed";
-
-                                  if (e.code == 'email-already-in-use') {
-                                    message =
-                                        "This email is already registered";
-                                  } else if (e.code == 'weak-password') {
-                                    message = "Password is too weak";
-                                  } else if (e.code == 'invalid-email') {
-                                    message = "Please enter a valid email";
-                                  }
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(message)),
-                                  );
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text("Something went wrong"),
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-
+                            onPressed: _register,
                             style: ElevatedButton.styleFrom(
                               elevation: 5,
-                              backgroundColor: Color(0xFF6F435C),
+                              backgroundColor:
+                                  const Color(0xFF6F435C),
                               foregroundColor: Colors.white,
-                              minimumSize: Size(double.infinity, 50),
+                              minimumSize:
+                                  const Size(double.infinity, 50),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius:
+                                    BorderRadius.circular(20),
                               ),
                             ),
-                            child: Text(
+                            child: const Text(
                               "Register",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
@@ -620,11 +861,14 @@ class _LogoScreenState extends State<LogoScreen> {
                               ),
                             ),
                           ),
-                          SizedBox(height: 5),
+
+                          const SizedBox(height: 5),
+
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisAlignment:
+                                MainAxisAlignment.center,
                             children: [
-                              Text(
+                              const Text(
                                 "Already have an account?",
                                 style: TextStyle(
                                   color: Color(0xFF6F435C),
@@ -632,11 +876,14 @@ class _LogoScreenState extends State<LogoScreen> {
                                   fontSize: 15,
                                 ),
                               ),
+
                               TextButton(
                                 onPressed: () {
-                                  Navigator.pop(context);
+                                  setState(() {
+                                    selectedTab = 0;
+                                  });
                                 },
-                                child: Text(
+                                child: const Text(
                                   "Login",
                                   style: TextStyle(
                                     color: Color(0xFF6F435C),
@@ -652,40 +899,53 @@ class _LogoScreenState extends State<LogoScreen> {
                     ),
                   ),
                 ),
-              SizedBox(height: 20),
-              Text(
-                "Demo Login(Choose Role)",
+
+              const SizedBox(height: 20),
+
+              // ================= DEMO LOGIN =================
+                  
+              const Text(
+                "Demo Login (Choose Role)",
                 style: TextStyle(
                   color: Color(0xFF6F435C),
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 20),
+
+              const SizedBox(height: 20),
+
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment:
+                    MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Student
+                  // ================= STUDENT =================
+
                   GestureDetector(
                     onTap: () {
                       setState(() {
                         selectedRole = "Student";
                       });
+
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => HomeScreen()),
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const HomeScreen(),
+                        ),
                       );
                     },
                     child: Container(
                       width: 120,
                       padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
-                        color: Colors.white, // Dusty Purple
-                        borderRadius: BorderRadius.circular(15),
+                        color: Colors.white,
+                        borderRadius:
+                            BorderRadius.circular(15),
                         border: Border.all(
                           color: selectedRole == "Student"
                               ? const Color(0xFF7B5E8E)
-                              : Color(0xFF6F435C),
+                              : const Color(0xFF6F435C),
                           width: 2,
                         ),
                       ),
@@ -696,7 +956,9 @@ class _LogoScreenState extends State<LogoScreen> {
                             size: 35,
                             color: Color(0xFF6F435C),
                           ),
+
                           const SizedBox(height: 8),
+
                           const Text(
                             "Student",
                             style: TextStyle(
@@ -704,6 +966,7 @@ class _LogoScreenState extends State<LogoScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+
                           if (selectedRole == "Student")
                             const Icon(
                               Icons.check_circle,
@@ -715,53 +978,51 @@ class _LogoScreenState extends State<LogoScreen> {
                     ),
                   ),
 
-                  // Teacher
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedRole = "Teacher";
-                      });
-                    },
-                    child: Container(
-                      width: 120,
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: Colors.white, // Dusty Purple
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: selectedRole == "Teacher"
-                              ? const Color(0xFF7B5E8E)
-                              : Color(0xFF6F435C),
-                          width: 2,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          const Icon(
-                            Icons.person,
-                            size: 35,
-                            color: Color(0xFF6F435C),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            "Teacher",
-                            style: TextStyle(
-                              color: Color(0xFF6F435C),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          if (selectedRole == "Teacher")
-                            const Icon(
-                              Icons.check_circle,
-                              color: Color(0xFF6F435C),
-                              size: 18,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // ================= TEACHER =================
+GestureDetector(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const TeacherDashboard(),
+      ),
+    );
+  },
+  child: Container(
+    width: 120,
+    padding: const EdgeInsets.all(15),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(15),
+      border: Border.all(
+        color: const Color(0xFF6F435C),
+        width: 2,
+      ),
+    ),
+    child: const Column(
+      children: [
+        Icon(
+          Icons.person,
+          size: 35,
+          color: Color(0xFF6F435C),
+        ),
 
-                  // Controller
+        SizedBox(height: 8),
+
+        Text(
+          "Teacher",
+          style: TextStyle(
+            color: Color(0xFF6F435C),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+
+                  // ================= CONTROLLER =================
+
                   GestureDetector(
                     onTap: () {
                       setState(() {
@@ -780,12 +1041,13 @@ class _LogoScreenState extends State<LogoScreen> {
                       width: 120,
                       padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
-                        color: Colors.white, // Dusty Purple
-                        borderRadius: BorderRadius.circular(15),
+                        color: Colors.white,
+                        borderRadius:
+                            BorderRadius.circular(15),
                         border: Border.all(
                           color: selectedRole == "Controller"
                               ? const Color(0xFF7B5E8E)
-                              : Color(0xFF6F435C),
+                              : const Color(0xFF6F435C),
                           width: 2,
                         ),
                       ),
@@ -796,7 +1058,9 @@ class _LogoScreenState extends State<LogoScreen> {
                             size: 35,
                             color: Color(0xFF6F435C),
                           ),
+
                           const SizedBox(height: 8),
+
                           const Text(
                             "Controller",
                             style: TextStyle(
@@ -804,6 +1068,7 @@ class _LogoScreenState extends State<LogoScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+
                           if (selectedRole == "Controller")
                             const Icon(
                               Icons.check_circle,
@@ -816,6 +1081,8 @@ class _LogoScreenState extends State<LogoScreen> {
                   ),
                 ],
               ),
+
+              const SizedBox(height: 30),
             ],
           ),
         ),

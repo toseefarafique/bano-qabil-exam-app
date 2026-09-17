@@ -33,7 +33,7 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR_EXISTING_WEB_API_KEY',
+    apiKey: 'AIzaSyCH7tXZ7UxiPmtSLpzbRiN_2bUZEVoQetg',
     appId: '1:941054054380:web:8e443ebe634b97bdc9bac9',
     messagingSenderId: '941054054380',
     projectId: 'bano-qabil-exam',
@@ -42,24 +42,22 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_EXISTING_ANDROID_API_KEY',
+    apiKey: 'AIzaSyATVmIYvNcuclJ5jiiY7KkSvvan3P0BQ40',
     appId: '1:941054054380:android:abafbafd09e1b3d3c9bac9',
     messagingSenderId: '941054054380',
     projectId: 'bano-qabil-exam',
     storageBucket: 'bano-qabil-exam.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_EXISTING_IOS_API_KEY',
+    apiKey: 'AIzaSyDiPd2zsv4Z7V033Mz4-d6BWhzREFIcZ44',
     appId: '1:941054054380:ios:2cde0d8430b571bbc9bac9',
     messagingSenderId: '941054054380',
     projectId: 'bano-qabil-exam',
     storageBucket: 'bano-qabil-exam.firebasestorage.app',
     iosBundleId: 'com.example.banoQabilExam',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'YOUR_EXISTING_MACOS_API_KEY',
+    apiKey: 'AIzaSyDiPd2zsv4Z7V033Mz4-d6BWhzREFIcZ44',
     appId: '1:941054054380:ios:2cde0d8430b571bbc9bac9',
     messagingSenderId: '941054054380',
     projectId: 'bano-qabil-exam',
@@ -68,7 +66,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'YOUR_EXISTING_WINDOWS_API_KEY',
+    apiKey: 'AIzaSyCH7tXZ7UxiPmtSLpzbRiN_2bUZEVoQetg',
     appId: '1:941054054380:web:03805dac129761e6c9bac9',
     messagingSenderId: '941054054380',
     projectId: 'bano-qabil-exam',
