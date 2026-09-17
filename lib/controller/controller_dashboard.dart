@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../logo_screen.dart';
 import 'controller_publish_report_screen.dart';
 import 'notifications_screen.dart';
 import '../controller/student_results_screen.dart';
@@ -43,12 +44,34 @@ class ControllerDashboard extends StatelessWidget {
   }
 
   Future<void> _logout(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
+    try {
+      await FirebaseAuth.instance.signOut();
 
-    if (context.mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
+
+    if (!context.mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(
+    builder: (_) => const LogoScreen(),
+    ),
+    (route) => false,
+    );
+
+
+    } catch (e) {
+    if (!context.mounted) return;
+
+
+    ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+    content: Text('Logout failed: $e'),
+    ),
+    );
+
+
     }
   }
+
 
   Widget _actionCard({
     required BuildContext context,
