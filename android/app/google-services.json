@@ -18,14 +18,30 @@
           "current_key": "AIzaSyATVmIYvNcuclJ5jiiY7KkSvvan3P0BQ40"
         }
       ],
-
-
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": []
         }
       }
-
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:941054054380:android:a12a2c0d3002fa77c9bac9",
+        "android_client_info": {
+          "package_name": "com.example.banoqabi_exam"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATVmIYvNcuclJ5jiiY7KkSvvan3P0BQ40"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"

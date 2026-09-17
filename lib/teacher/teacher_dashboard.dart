@@ -165,7 +165,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         ),
       ),
 
-       body: IndexedStack(
+      // ============================================================
+      // BODY
+      // ============================================================
+      body: IndexedStack(
   index: _currentIndex,
   children: [
     _dashboardScreen(),
@@ -183,7 +186,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   ],
 ),
 
-      
+      // ============================================================
+      // ONE COMMON BOTTOM NAVIGATION BAR
+      // ============================================================
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
@@ -229,7 +234,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-
+  // ============================================================
+  // DASHBOARD SCREEN
+  // ============================================================
 
   Widget _dashboardScreen() {
     return SafeArea(
@@ -308,6 +315,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 ],
               ),
 
+              // ================= DASHBOARD CONTENT =================
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
                   18,
@@ -582,8 +590,11 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-  
-  Widget _quizzesScreen() {
+  // ============================================================
+  // QUIZZES SCREEN
+  // ============================================================
+
+  Widget quizzesScreen() {
     return SafeArea(
       child: Center(
         child: ConstrainedBox(
@@ -620,8 +631,11 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-  
-  Widget _attemptsScreen() {
+  // ============================================================
+  // ATTEMPTS SCREEN
+  // ============================================================
+
+  Widget attemptsScreen() {
     return SafeArea(
       child: Center(
         child: ConstrainedBox(
@@ -658,7 +672,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-  
+  // ============================================================
+  // DRAWER ITEM
+  // ============================================================
+
   Widget _drawerItem({
     required IconData icon,
     required String title,
@@ -698,7 +715,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-  
+  // ============================================================
+  // EXAM CARD
+  // ============================================================
+
   Widget _examCard({
     required IconData icon,
     required String title,
@@ -811,6 +831,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   }
 }
 
+// ============================================================
+// STAT CARD
+// ============================================================
 
 class _StatCard extends StatelessWidget {
   final IconData icon;

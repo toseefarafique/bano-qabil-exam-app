@@ -1,17 +1,48 @@
-import 'package:bano_qabil_exam/Student/Result_screen.dart';
+import 'Result_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class QuizScreen extends StatefulWidget {
-  const QuizScreen({super.key});
+  final String quizId;
+ const QuizScreen({
+  super.key,
+  required this.quizId,
+});
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
 }
 
 class _QuizScreenState extends State<QuizScreen> {
+  Future<List<Map<String, dynamic>>> getQuestions() async {
+  QuerySnapshot snapshot = await FirebaseFirestore.instance
+      .collection('questions')
+      .where('quizId', isEqualTo: widget.quizId)
+      .get();
+
+  return snapshot.docs.map((doc) {
+    return doc.data() as Map<String, dynamic>;
+  }).toList();
+}
+Future<void> loadQuestions() async {
+  List<Map<String, dynamic>> data = await getQuestions();
+
+  if (mounted) {
+    setState(() {
+      questions = data;
+      isLoading = false;
+    });
+  }
+}
+List<Map<String, dynamic>> questions = [];
+int currentQuestion = 0;
+bool isLoading = true;
+
   int? selectedOption;
   int correctAnswer = 0;
+  int score = 0;
   Timer? _timer;
 
 Duration _remainingTime = const Duration(minutes: 30);
@@ -20,6 +51,8 @@ DateTime? _startTime;
 @override
 void initState() {
   super.initState();
+
+  loadQuestions();
 
   _startTime = DateTime.now();
 
@@ -60,8 +93,46 @@ void _submitExam() {
 
   // Result screen yahan open hogi
 }
+Future<void> saveResult() async {
+  User? user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    debugPrint("Student not logged in");
+    return;
+  }
+
+  int total = questions.length;
+  int percentage = total == 0 ? 0 : ((score / total) * 100).round();
+
+  await FirebaseFirestore.instance.collection('result').add({
+    'studentId': user.uid,
+    'quizId': widget.quizId,
+    'score': score,
+    'totalQuestion': total,
+    'percentage': percentage,
+    'date': Timestamp.now(),
+    'timeUsed': _timeUsed.inSeconds,
+  });
+
+  debugPrint("Result Saved Successfully");
+}
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+  return const Scaffold(
+    body: Center(
+      child: CircularProgressIndicator(),
+    ),
+  );
+}
+if (questions.isEmpty) {
+  return const Scaffold(
+    body: Center(
+      child: Text("No Questions Found"),
+    ),
+  );
+}
+int correct = questions[currentQuestion]['correctAnswer'] ?? 0;
     return Scaffold(
       appBar: AppBar(
         backgroundColor:Color(0xFF6F435C),
@@ -110,7 +181,7 @@ void _submitExam() {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("3/20",
+            Text("${currentQuestion + 1}/${questions.length}",
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 18,
@@ -118,18 +189,19 @@ void _submitExam() {
             ),),
             SizedBox(height: 4),
             LinearProgressIndicator(
-              value: 0.35,
+              value: (currentQuestion + 1) / questions.length,
                minHeight: 8,
                color: Color(0xFF6F435C),
                 borderRadius: BorderRadius.circular(15),
                  ),
             SizedBox(height: 20),
-            Text("Q1:  Which widget is used as the root of a Flutter app?",
+            
+            Text(  "Q${currentQuestion + 1}: ${questions[currentQuestion]['question']}",
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),) ,
-            SizedBox(height: 10),
+            SizedBox(height: 20),
        // A
 GestureDetector(
   onTap: () {
@@ -153,7 +225,7 @@ GestureDetector(
       borderRadius: BorderRadius.circular(15),
     ),
     child: Text(
-      'A. MaterialApp',
+      "A. ${questions[currentQuestion]['options'][0]}",
       style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w800,
@@ -187,7 +259,7 @@ GestureDetector(
       borderRadius: BorderRadius.circular(15),
     ),
     child: Text(
-      'B. Builder Function',
+    "B. ${questions[currentQuestion]['options'][1]}",
       style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.bold,
@@ -221,7 +293,7 @@ GestureDetector(
       borderRadius: BorderRadius.circular(15),
     ),
     child: Text(
-      'C. Stream Builder',
+    "C. ${questions[currentQuestion]['options'][2]}",
       style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.bold,
@@ -255,7 +327,7 @@ GestureDetector(
       borderRadius: BorderRadius.circular(15),
     ),
     child: Text(
-      'D. Scaffold',
+    "D. ${questions[currentQuestion]['options'][3]}",
       style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w800,
@@ -357,20 +429,38 @@ GestureDetector(
             ),
            ),),
           SizedBox(width: 80),
-           ElevatedButton(onPressed: (){
-            Navigator.push(context,
-            MaterialPageRoute(builder: (context)=> ResultScreen() ));
-             if (selectedOption == null) {
-              debugPrint("Please select an option");
-      return;
-    }
+           ElevatedButton(onPressed: () async{
+  if (selectedOption == null) {
+    debugPrint("Please select an option");
+    return;
+  }
 
-    if (selectedOption == correctAnswer) {
-      debugPrint("Correct Answer");
-    } else {
-      debugPrint("Wrong Answer");
-    }
-           },
+  if (selectedOption == correct) {
+    score++;
+    debugPrint("Correct Answer");
+  } else {
+    debugPrint("Wrong Answer");
+  }
+
+  if (currentQuestion < questions.length - 1) {
+    setState(() {
+      currentQuestion++;
+      selectedOption = null;
+    });
+  } else {
+     await saveResult();
+
+      Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => ResultScreen(
+        score: score,
+        totalQuestions: questions.length,
+      ),
+    ),
+  );
+  }
+},
           style: ElevatedButton.styleFrom(
              backgroundColor: Color(0xFF6F435C),
              foregroundColor: Color(0xFFFFFBF0),
