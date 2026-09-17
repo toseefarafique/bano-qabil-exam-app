@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'question_bank.dart';
 import 'create_quiz.dart';
 import 'attempts_results.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../logo_screen.dart';
 
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
@@ -150,14 +152,22 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
               // ================= LOGOUT =================
               _drawerItem(
-                icon: Icons.logout,
-                title: "Logout",
-                onTap: () {
-                  Navigator.pop(context);
+  icon: Icons.logout,
+  title: "Logout",
+  onTap: () async {
+    await FirebaseAuth.instance.signOut();
 
-                  // Later logout functionality add hogi.
-                },
-              ),
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LogoScreen(),
+      ),
+      (route) => false,
+    );
+  },
+),
 
               const SizedBox(height: 15),
             ],
