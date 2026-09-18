@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'question_bank.dart';
 import 'create_quiz.dart';
 import 'attempts_results.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../logo_screen.dart';
+import 'package:bano_qabil_exam/teacher/manage_quizzes.dart';
 
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
@@ -13,207 +15,168 @@ class TeacherDashboard extends StatefulWidget {
 }
 
 class _TeacherDashboardState extends State<TeacherDashboard> {
-  // ================= COLORS =================
-  static const Color plum = Color(0xFF6D597A);
-  static const Color darkPlum = Color(0xFF44364D);
-  static const Color accent = Color(0xFFDDBEA9);
-  static const Color cream = Color(0xFFF8F4F0);
-  static const Color textColor = Color(0xFF332D35);
-
-  // ================= BOTTOM NAV INDEX =================
   int _currentIndex = 0;
-  
+
+  final Color primaryPlum = const Color(0xFF6D597A);
+  final Color darkPlum = const Color(0xFF44364D);
+  final Color cream = const Color(0xFFF8F4F0);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: cream,
 
-      // ============================================================
-      // DRAWER
-      // ============================================================
       drawer: Drawer(
-        backgroundColor: plum,
-        child: SafeArea(
-          child: Column(
-            children: [
-              // ================= LOGO / APP NAME =================
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.school,
-                      color: Colors.white,
-                      size: 38,
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const Text(
-                      "Bano Qabil Exam",
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: darkPlum,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: const Color(0xFFDDBEA9),
+                    child: Text(
+                      'AK',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
+                        color: darkPlum,
                         fontWeight: FontWeight.bold,
+                        fontSize: 20,
                       ),
                     ),
-
-                    const SizedBox(height: 3),
-
-                    const Text(
-                      "Learn • Practice • Grow",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 11,
-                      ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Ms. Ayesha Khan',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                ),
+                  ),
+                  const Text(
+                    'Teacher',
+                    style: TextStyle(
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
               ),
+            ),
 
-              const Divider(
-                color: Colors.white24,
-                indent: 20,
-                endIndent: 20,
-              ),
+            ListTile(
+              leading: const Icon(Icons.dashboard_outlined),
+              title: const Text('Dashboard'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  _currentIndex = 0;
+                });
+              },
+            ),
 
-              // ================= DASHBOARD =================
-              _drawerItem(
-                icon: Icons.dashboard_outlined,
-                title: "Dashboard",
-                selected: _currentIndex == 0,
-                onTap: () {
-                  Navigator.pop(context);
+            ListTile(
+              leading: const Icon(Icons.edit_note),
+              title: const Text('Question Bank'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  _currentIndex = 1;
+                });
+              },
+            ),
 
-                  setState(() {
-                    _currentIndex = 0;
-                  });
-                },
-              ),
+            ListTile(
+              leading: const Icon(Icons.add_circle_outline),
+              title: const Text('Add Questions'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
 
-              // ================= QUESTION BANK =================
-              _drawerItem(
-                icon: Icons.edit_note,
-                title: "Question Bank",
-                selected: _currentIndex == 1,
-                onTap: () {
-                  Navigator.pop(context);
+            ListTile(
+              leading: const Icon(Icons.quiz_outlined),
+              title: const Text('Create Exam'),
+              onTap: () {
+                Navigator.pop(context);
 
-                  setState(() {
-                    _currentIndex = 1;
-                  });
-                },
-              ),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CreateQuiz(),
+                  ),
+                );
+              },
+            ),
 
-              // ================= ADD QUESTIONS =================
-              _drawerItem(
-                icon: Icons.menu_book_outlined,
-                title: "Add Questions",
-                onTap: () {
-                  Navigator.pop(context);
+            ListTile(
+              leading: const Icon(Icons.assessment_outlined),
+              title: const Text('Attempts & Results'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  _currentIndex = 3;
+                });
+              },
+            ),
 
-                  // Later Add Questions screen ki navigation yahan add hogi.
-                },
-              ),
+            const Divider(),
 
-              // ================= CREATE EXAM =================
-              _drawerItem(
-                icon: Icons.bar_chart_outlined,
-                title: "Create Exam",
-                onTap: () {
-                  Navigator.pop(context);
-                   Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const CreateQuiz(),
-    ),
-  );
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () async {
+                await FirebaseAuth.instance.signOut();
 
-                  // Later Create Exam screen ki navigation yahan add hogi.
-                },
-              ),
-              _drawerItem(
-  icon: Icons.people_outline,
-  title: "Attempts & Results",
-  selected: _currentIndex == 3,
-  onTap: () {
-    Navigator.pop(context);
+                if (!mounted) return;
 
-    setState(() {
-      _currentIndex = 3;
-    });
-  },
-),
-
-
-
-              const Spacer(),
-
-              // ================= LOGOUT =================
-              _drawerItem(
-  icon: Icons.logout,
-  title: "Logout",
-  onTap: () async {
-    await FirebaseAuth.instance.signOut();
-
-    if (!mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const LogoScreen(),
-      ),
-      (route) => false,
-    );
-  },
-),
-
-              const SizedBox(height: 15),
-            ],
-          ),
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LogoScreen(),
+                  ),
+                  (route) => false,
+                );
+              },
+            ),
+          ],
         ),
       ),
 
-      // ============================================================
-      // BODY
-      // ============================================================
       body: IndexedStack(
-  index: _currentIndex,
-  children: [
-    _dashboardScreen(),
-    QuestionBank(
-      onBack: () {
-        setState(() {
-          _currentIndex = 0;
-        });
-      },
-    ),
-      
-      
-      const CreateQuiz(),
-    const AttemptsResults(),
-  ],
-),
+        index: _currentIndex,
+        children: [
+          _dashboardScreen(),
 
-      // ============================================================
-      // ONE COMMON BOTTOM NAVIGATION BAR
-      // ============================================================
+          QuestionBank(
+            onBack: () {
+              setState(() {
+                _currentIndex = 0;
+              });
+            },
+          ),
+
+          const ManageQuizzes(),
+
+          const AttemptsResults(),
+        ],
+      ),
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
+        selectedItemColor: primaryPlum,
+        unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
 
-        selectedItemColor: plum,
-        unselectedItemColor: Colors.grey,
-
-        backgroundColor: Colors.white,
-        elevation: 10,
-
         onTap: (index) {
-  setState(() {
-    _currentIndex = index;
-  });
-},
+          setState(() {
+            _currentIndex = index;
+          });
+        },
 
         items: const [
           BottomNavigationBarItem(
@@ -221,22 +184,19 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             activeIcon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
-
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_outlined),
-            activeIcon: Icon(Icons.menu_book),
+            icon: Icon(Icons.edit_note_outlined),
+            activeIcon: Icon(Icons.edit_note),
             label: 'Questions',
           ),
-
           BottomNavigationBarItem(
             icon: Icon(Icons.quiz_outlined),
             activeIcon: Icon(Icons.quiz),
             label: 'Quizzes',
           ),
-
           BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            activeIcon: Icon(Icons.people),
+            icon: Icon(Icons.assessment_outlined),
+            activeIcon: Icon(Icons.assessment),
             label: 'Attempts',
           ),
         ],
@@ -257,66 +217,30 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           ),
           child: CustomScrollView(
             slivers: [
-              // ================= TOP APP BAR =================
               SliverAppBar(
                 backgroundColor: darkPlum,
-                elevation: 0,
+                foregroundColor: Colors.white,
                 pinned: true,
-                automaticallyImplyLeading: false,
-
-                // Hamburger Button
-                leading: Builder(
-                  builder: (context) {
-                    return IconButton(
-                      icon: const Icon(
-                        Icons.menu,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                      onPressed: () {
-                        Scaffold.of(context).openDrawer();
-                      },
-                    );
-                  },
-                ),
-
-                // Title
                 title: const Text(
-                  "Dashboard",
+                  'Dashboard',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
-                // Actions
                 actions: [
                   IconButton(
+                    icon: const Icon(Icons.notifications_none),
                     onPressed: () {},
-                    icon: const Icon(
-                      Icons.notifications_none,
-                      color: Colors.white,
-                    ),
                   ),
-
-                  Container(
-                    margin: const EdgeInsets.only(
-                      right: 15,
-                      left: 5,
-                    ),
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      color: accent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: const Color(0xFFDDBEA9),
                       child: Text(
-                        "AK",
+                        'AK',
                         style: TextStyle(
                           color: darkPlum,
-                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -325,270 +249,278 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 ],
               ),
 
-              // ================= DASHBOARD CONTENT =================
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  18,
-                  15,
-                  18,
-                  30,
-                ),
+                padding: const EdgeInsets.all(20),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate(
                     [
-                      // Greeting
                       const Text(
-                        "Good Morning,",
+                        'Good Morning, Ms. Ayesha Khan',
                         style: TextStyle(
-                          color: textColor,
-                          fontSize: 14,
-                        ),
-                      ),
-
-                      const SizedBox(height: 3),
-
-                      const Text(
-                        "Ms. Ayesha Khan",
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 23,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
 
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 6),
 
-                      Text(
-                        "Here's what's happening with your exams today.",
+                      const Text(
+                        'Manage your exams and track student performance.',
                         style: TextStyle(
-                          color: textColor.withOpacity(0.65),
-                          fontSize: 13,
+                          color: Colors.grey,
                         ),
                       ),
 
-                      const SizedBox(height: 22),
+                      const SizedBox(height: 25),
 
-                      // ================= OVERVIEW =================
                       const Text(
-                        "Overview",
+                        'Overview',
                         style: TextStyle(
-                          color: textColor,
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
 
-                      // ================= STAT CARDS =================
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          int columns =
-                              constraints.maxWidth > 650 ? 4 : 2;
-
-                          return GridView.count(
-                            crossAxisCount: columns,
-                            shrinkWrap: true,
-                            physics:
-                                const NeverScrollableScrollPhysics(),
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
-                            childAspectRatio: 1.45,
-                            children: const [
-                              _StatCard(
-                                icon: Icons.assignment_outlined,
-                                title: "Total Exams",
-                                value: "5",
-                                color: plum,
-                              ),
-
-                              _StatCard(
-                                icon: Icons.access_time,
-                                title: "Active Exams",
-                                value: "2",
-                                color: plum,
-                              ),
-
-                              _StatCard(
-                                icon: Icons.people_outline,
-                                title: "Total Students",
-                                value: "24",
-                                color: plum,
-                              ),
-
-                              _StatCard(
-                                icon: Icons.check_circle_outline,
-                                title: "Completed",
-                                value: "3",
-                                color: plum,
-                              ),
-                            ],
-                          );
-                        },
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        childAspectRatio: 1.7,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        children: [
+                          _StatCard(
+                            icon: Icons.quiz_outlined,
+                            title: 'Total Exams',
+                            value: '5',
+                            color: primaryPlum,
+                          ),
+                          _StatCard(
+                            icon: Icons.play_circle_outline,
+                            title: 'Active Exams',
+                            value: '2',
+                            color: Colors.green,
+                          ),
+                          _StatCard(
+                            icon: Icons.people_outline,
+                            title: 'Total Students',
+                            value: '24',
+                            color: Colors.blue,
+                          ),
+                          _StatCard(
+                            icon: Icons.check_circle_outline,
+                            title: 'Completed',
+                            value: '3',
+                            color: Colors.orange,
+                          ),
+                        ],
                       ),
 
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 30),
 
-                      // ================= RECENT EXAMS =================
                       Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
-                            "Recent Exams",
+                            'Recent Exams',
                             style: TextStyle(
-                              color: textColor,
-                              fontSize: 18,
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
 
                           TextButton(
-                            onPressed: () {},
-                            child: const Text(
-                              "View All",
+                            onPressed: () {
+                              setState(() {
+                                _currentIndex = 2;
+                              });
+                            },
+                            child: Text(
+                              'View All',
                               style: TextStyle(
-                                color: plum,
-                                fontWeight: FontWeight.w600,
+                                color: primaryPlum,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 10),
 
-                      // Exam 1
-                      _examCard(
-                        icon: Icons.lock_outline,
-                        title: "Flutter Basics Quiz",
-                        subtitle: "Flutter  •  Practice",
-                        date: "24 Aug 2025",
-                        status: "Active",
-                        statusColor: Colors.green,
+                      // ==================================================
+                      // FIREBASE RECENT EXAMS
+                      // ==================================================
+
+                      StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('quizzes')
+                            .orderBy(
+                              'createdAt',
+                              descending: true,
+                            )
+                            .limit(3)
+                            .snapshots(),
+
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(30),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+
+                          if (snapshot.hasError) {
+                            return Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: const Text(
+                                'Unable to load recent exams.',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (!snapshot.hasData ||
+                              snapshot.data!.docs.isEmpty) {
+                            return Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(25),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: const Column(
+                                children: [
+                                  Icon(
+                                    Icons.quiz_outlined,
+                                    size: 45,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(height: 10),
+                                  Text(
+                                    'No exams created yet.',
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          final quizzes = snapshot.data!.docs;
+
+                          return Column(
+                            children: quizzes.map((doc) {
+                              final data =
+                                  doc.data() as Map<String, dynamic>;
+
+                              final String title =
+                                  data['title'] ?? 'Untitled Quiz';
+
+                              final String subject =
+                                  data['subject'] ?? 'No Subject';
+
+                              final String type =
+                                  data['type'] ?? 'Practice';
+
+                              final String status =
+                                  data['status'] ?? 'Draft';
+
+                              final Timestamp? createdAt =
+                                  data['createdAt'] is Timestamp
+                                      ? data['createdAt']
+                                      : null;
+
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.only(bottom: 12),
+                                child: _examCard(
+                                  icon: Icons.quiz_outlined,
+                                  title: title,
+                                  subtitle: '$subject  •  $type',
+                                  date: _formatDate(createdAt),
+                                  status: status,
+                                  statusColor:
+                                      _getStatusColor(status),
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        },
                       ),
 
-                      // Exam 2
-                      _examCard(
-                        icon: Icons.menu_book_outlined,
-                        title: "Web Development Test",
-                        subtitle: "Web  •  Practice",
-                        date: "26 Aug 2025",
-                        status: "Scheduled",
-                        statusColor: plum,
-                      ),
+                      const SizedBox(height: 25),
 
-                      // Exam 3
-                      _examCard(
-                        icon: Icons.science_outlined,
-                        title: "Cybersecurity Exam",
-                        subtitle: "Cybersecurity  •  Official",
-                        date: "28 Aug 2025",
-                        status: "Draft",
-                        statusColor: Colors.grey,
-                      ),
+                      // ==================================================
+                      // CREATE NEW EXAM
+                      // ==================================================
 
-                      const SizedBox(height: 22),
-
-                      // ================= CREATE EXAM BOX =================
                       Container(
+                        width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF0E7E1),
-                          borderRadius: BorderRadius.circular(16),
+                          color: primaryPlum,
+                          borderRadius: BorderRadius.circular(18),
                         ),
                         child: Row(
                           children: [
-                            Container(
-                              width: 65,
-                              height: 65,
-                              decoration: BoxDecoration(
-                                color: accent.withOpacity(0.5),
-                                borderRadius:
-                                    BorderRadius.circular(35),
-                              ),
-                              child: const Icon(
-                                Icons.person_outline,
-                                color: plum,
-                                size: 35,
-                              ),
-                            ),
-
-                            const SizedBox(width: 15),
-
-                            Expanded(
+                            const Expanded(
                               child: Column(
                                 crossAxisAlignment:
                                     CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    "Create a new exam",
+                                  Text(
+                                    'Create a New Exam',
                                     style: TextStyle(
-                                      color: textColor,
-                                      fontSize: 17,
+                                      color: Colors.white,
+                                      fontSize: 19,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-
-                                  const SizedBox(height: 5),
-
+                                  SizedBox(height: 6),
                                   Text(
-                                    "Set up questions, define time\n"
-                                    "and publish instantly.",
+                                    'Add questions and assign an exam to students.',
                                     style: TextStyle(
-                                      color:
-                                          textColor.withOpacity(0.65),
-                                      fontSize: 12,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 12),
-
-                                  ElevatedButton.icon(
-                                    onPressed: () {
-                                       Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CreateQuiz(),
-      ),
-    );
-
-
-
-
-
-
-                                    },
-                                    style:
-                                        ElevatedButton.styleFrom(
-                                      backgroundColor: plum,
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      padding:
-                                          const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 10,
-                                      ),
-                                      shape:
-                                          RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    icon: const Icon(
-                                      Icons.add,
-                                      size: 17,
-                                    ),
-                                    label: const Text(
-                                      "Create Exam",
+                                      color: Colors.white70,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
+
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const CreateQuiz(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: primaryPlum,
+                              ),
+                              child: const Text('Create'),
+                            ),
                           ],
                         ),
                       ),
+
+                      const SizedBox(height: 30),
                     ],
                   ),
                 ),
@@ -596,131 +528,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // QUIZZES SCREEN
-  // ============================================================
-
-  Widget quizzesScreen() {
-    return SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 1000,
-          ),
-          child: Scaffold(
-            backgroundColor: cream,
-            appBar: AppBar(
-              backgroundColor: darkPlum,
-              elevation: 0,
-              automaticallyImplyLeading: false,
-              title: const Text(
-                "Quizzes",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            body: const Center(
-              child: Text(
-                "Quizzes Screen",
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // ATTEMPTS SCREEN
-  // ============================================================
-
-  Widget attemptsScreen() {
-    return SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 1000,
-          ),
-          child: Scaffold(
-            backgroundColor: cream,
-            appBar: AppBar(
-              backgroundColor: darkPlum,
-              elevation: 0,
-              automaticallyImplyLeading: false,
-              title: const Text(
-                "Attempts",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            body: const Center(
-              child: Text(
-                "Attempts Screen",
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // DRAWER ITEM
-  // ============================================================
-
-  Widget _drawerItem({
-    required IconData icon,
-    required String title,
-    bool selected = false,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 3,
-      ),
-      decoration: BoxDecoration(
-        color: selected
-            ? Colors.white.withOpacity(0.12)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ListTile(
-        dense: true,
-
-        leading: Icon(
-          icon,
-          color: Colors.white,
-          size: 25,
-        ),
-
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-          ),
-        ),
-
-        onTap: onTap,
       ),
     );
   }
@@ -738,179 +545,195 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     required Color statusColor,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(13),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE9E1DD),
-        ),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            height: 50,
+            width: 50,
             decoration: BoxDecoration(
-              color: const Color(0xFFF0E7E1),
-              borderRadius: BorderRadius.circular(10),
+              color: primaryPlum.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               icon,
-              color: plum,
-              size: 22,
+              color: primaryPlum,
+              size: 26,
             ),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
 
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
                   style: const TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
 
-                const SizedBox(height: 4),
+                const SizedBox(height: 5),
 
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    color: textColor.withOpacity(0.55),
-                    fontSize: 11,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 13,
+                  ),
+                ),
+
+                const SizedBox(height: 5),
+
+                Text(
+                  date,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
           ),
 
-          Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.end,
-            children: [
-              Text(
-                date,
-                style: TextStyle(
-                  color: textColor.withOpacity(0.55),
-                  fontSize: 10,
-                ),
+          const SizedBox(width: 8),
+
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              status,
+              style: TextStyle(
+                color: statusColor,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
               ),
-
-              const SizedBox(height: 5),
-
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.12),
-                  borderRadius:
-                      BorderRadius.circular(20),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(width: 7),
-
-          const Icon(
-            Icons.chevron_right,
-            color: Colors.grey,
-            size: 40,
+            ),
           ),
         ],
       ),
     );
   }
-}
 
-// ============================================================
-// STAT CARD
-// ============================================================
+  // ============================================================
+  // STAT CARD
+  // ============================================================
 
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-  final Color color;
-
-  const _StatCard({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _StatCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(13),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE9E1DD),
-        ),
+        borderRadius: BorderRadius.circular(15),
       ),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0E7E1),
-              borderRadius:
-                  BorderRadius.circular(9),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 19,
-            ),
+          Icon(
+            icon,
+            color: color,
+            size: 30,
           ),
 
-          const Spacer(),
+          const SizedBox(width: 12),
 
-          Text(
-            title,
-            style: TextStyle(
-              color: const Color(0xFF332D35)
-                  .withOpacity(0.6),
-              fontSize: 10,
-            ),
-          ),
-
-          const SizedBox(height: 2),
-
-          Text(
-            value,
-            style: const TextStyle(
-              color: Color(0xFF332D35),
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  // ============================================================
+  // STATUS COLOR
+  // ============================================================
+
+  Color _getStatusColor(String status) {
+    if (status.toLowerCase() == 'published') {
+      return Colors.green;
+    }
+
+    if (status.toLowerCase() == 'active') {
+      return Colors.green;
+    }
+
+    if (status.toLowerCase() == 'scheduled') {
+      return primaryPlum;
+    }
+
+    return Colors.grey;
+  }
+
+  // ============================================================
+  // DATE FORMAT
+  // ============================================================
+
+  String _formatDate(Timestamp? timestamp) {
+    if (timestamp == null) {
+      return 'No date';
+    }
+
+    final date = timestamp.toDate();
+
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 }

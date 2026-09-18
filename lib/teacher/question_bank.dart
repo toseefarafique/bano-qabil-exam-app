@@ -1,9 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'add_question.dart';
+import 'edit_question.dart';
 
 class QuestionBank extends StatefulWidget {
-  // Parent TeacherDashboard ko batane ke liye
-  // ke Back Arrow press hua hai.
   final VoidCallback? onBack;
 
   const QuestionBank({
@@ -24,63 +24,45 @@ class _QuestionBankState extends State<QuestionBank> {
 
   String selectedSubject = 'All Subjects';
   String selectedDifficulty = 'All Difficulty';
+  String searchText = '';
 
+  final TextEditingController searchController =
+      TextEditingController();
 
-  final List<Map<String, String>> questions = [
-    {
-      'subject': 'Flutter',
-      'difficulty': 'Easy',
-      'question':
-          'What is the main purpose of setState() in Flutter?',
-    },
-    {
-      'subject': 'Cybersecurity',
-      'difficulty': 'Medium',
-      'question':
-          'Which attack tries to make a system unavailable?',
-    },
-    {
-      'subject': 'Web',
-      'difficulty': 'Hard',
-      'question':
-          'Which HTTP status code means "Not Found"?',
-    },
-    {
-      'subject': 'Islamiat',
-      'difficulty': 'Medium',
-      'question':
-          'Which Surah is known as "Surah Yaseen"?',
-    },
-  ];
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  // Firebase se questions read karna
+  Stream<QuerySnapshot<Map<String, dynamic>>> _questionsStream() {
+    return FirebaseFirestore.instance
+        .collection('questions')
+        .snapshots();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: background,
 
-      
-
       appBar: AppBar(
         backgroundColor: primary,
         elevation: 0,
         centerTitle: true,
 
-        
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back,
             color: Colors.white,
           ),
-
           onPressed: () {
-            // Parent TeacherDashboard ko call karega.
             if (widget.onBack != null) {
               widget.onBack!();
             }
           },
         ),
-
-        
 
         title: const Text(
           'Question Bank',
@@ -91,13 +73,9 @@ class _QuestionBankState extends State<QuestionBank> {
           ),
         ),
 
-  
-
         actions: [
           Padding(
-            padding: const EdgeInsets.only(
-              right: 15,
-            ),
+            padding: const EdgeInsets.only(right: 15),
             child: CircleAvatar(
               radius: 18,
               backgroundColor: accent,
@@ -110,38 +88,36 @@ class _QuestionBankState extends State<QuestionBank> {
         ],
       ),
 
-  
-
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 600,
-          ),
+          constraints: const BoxConstraints(maxWidth: 600),
+
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              
-
+              // Search
               TextField(
+                controller: searchController,
+                onChanged: (value) {
+                  setState(() {
+                    searchText = value.toLowerCase();
+                  });
+                },
                 decoration: InputDecoration(
                   hintText: 'Search questions...',
                   hintStyle: TextStyle(
                     color: Colors.grey.shade500,
                   ),
-
                   prefixIcon: const Icon(
                     Icons.search,
                     color: primary,
                   ),
-
                   filled: true,
                   fillColor: Colors.white,
-
                   contentPadding:
                       const EdgeInsets.symmetric(
                     vertical: 14,
                   ),
-
                   border: OutlineInputBorder(
                     borderRadius:
                         BorderRadius.circular(14),
@@ -152,10 +128,9 @@ class _QuestionBankState extends State<QuestionBank> {
 
               const SizedBox(height: 14),
 
-              
+              // Filters
               Row(
                 children: [
-                  // Subject
                   Expanded(
                     child: _filterDropdown(
                       value: selectedSubject,
@@ -177,7 +152,6 @@ class _QuestionBankState extends State<QuestionBank> {
 
                   const SizedBox(width: 10),
 
-                  // Difficulty
                   Expanded(
                     child: _filterDropdown(
                       value: selectedDifficulty,
@@ -199,56 +173,131 @@ class _QuestionBankState extends State<QuestionBank> {
 
               const SizedBox(height: 20),
 
-              
-              Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Questions',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
+              // Questions heading + Firebase count
+              StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: _questionsStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Text(
+                      'Error loading questions',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  }
 
-                  Text(
-                    '${questions.length} Questions',
-                    style: const TextStyle(
-                      color: primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+                  if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const Text(
+                      'Questions',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    );
+                  }
 
-              const SizedBox(height: 12),
+                  final docs = snapshot.data?.docs ?? [];
 
-              
-              ...questions.map(
-                (question) => _questionCard(question),
+                  final filteredQuestions =
+                      docs.where((doc) {
+                    final data = doc.data();
+
+                    final question =
+                        (data['question'] ?? '')
+                            .toString();
+
+                    final subject =
+                        (data['subject'] ?? '')
+                            .toString();
+
+                    final difficulty =
+                        (data['difficulty'] ?? '')
+                            .toString();
+
+                    // Search filter
+                    final matchesSearch =
+                        searchText.isEmpty ||
+                        question
+                            .toLowerCase()
+                            .contains(searchText);
+
+                    // Subject filter
+                    final matchesSubject =
+                        selectedSubject ==
+                            'All Subjects' ||
+                        subject == selectedSubject;
+
+                    // Difficulty filter
+                    final matchesDifficulty =
+                        selectedDifficulty ==
+                            'All Difficulty' ||
+                        difficulty ==
+                            selectedDifficulty;
+
+                    return matchesSearch &&
+                        matchesSubject &&
+                        matchesDifficulty;
+                  }).toList();
+
+                  return Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Questions',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+
+                          Text(
+                            '${filteredQuestions.length} Questions',
+                            style: const TextStyle(
+                              color: primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      if (filteredQuestions.isEmpty)
+                        _emptyState()
+                      else
+                        ...filteredQuestions.map(
+                          (doc) => _questionCard(
+                            doc.id,
+                            doc.data(),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
         ),
       ),
 
-      
       floatingActionButton: FloatingActionButton(
         backgroundColor: primary,
         elevation: 4,
-
         onPressed: () {
           Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const AddQuestion(),
-      ),
-    );
-          // Later Add Question screen open hogi.
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddQuestion(),
+            ),
+          );
         },
-
         child: const Icon(
           Icons.add,
           color: Colors.white,
@@ -258,7 +307,7 @@ class _QuestionBankState extends State<QuestionBank> {
     );
   }
 
-  
+  // Dropdown
   Widget _filterDropdown({
     required String value,
     required List<String> items,
@@ -275,53 +324,58 @@ class _QuestionBankState extends State<QuestionBank> {
           color: accent.withOpacity(0.6),
         ),
       ),
-
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-
           icon: const Icon(
             Icons.keyboard_arrow_down,
             color: primary,
           ),
-
           style: const TextStyle(
             color: textColor,
             fontSize: 13,
           ),
-
           items: items.map((item) {
             return DropdownMenuItem(
               value: item,
               child: Text(item),
             );
           }).toList(),
-
           onChanged: onChanged,
         ),
       ),
     );
   }
 
-  
+  // Question Card
   Widget _questionCard(
-    Map<String, String> question,
+    String documentId,
+    Map<String, dynamic> question,
   ) {
+    final String questionText =
+        (question['question'] ?? 'No question')
+            .toString();
+
+    final String subject =
+        (question['subject'] ?? 'No Subject')
+            .toString();
+
+    final String difficulty =
+        (question['difficulty'] ?? 'No Difficulty')
+            .toString();
+
     return Container(
       margin: const EdgeInsets.only(
         bottom: 12,
       ),
       padding: const EdgeInsets.all(14),
-
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-
         border: Border.all(
           color: accent.withOpacity(0.45),
         ),
-
         boxShadow: [
           BoxShadow(
             color: dark.withOpacity(0.06),
@@ -330,22 +384,18 @@ class _QuestionBankState extends State<QuestionBank> {
           ),
         ],
       ),
-
       child: Row(
         crossAxisAlignment:
             CrossAxisAlignment.start,
         children: [
-         
           Container(
             height: 46,
             width: 46,
-
             decoration: BoxDecoration(
               color: background,
               borderRadius:
                   BorderRadius.circular(12),
             ),
-
             child: const Icon(
               Icons.help_outline,
               color: primary,
@@ -355,7 +405,6 @@ class _QuestionBankState extends State<QuestionBank> {
 
           const SizedBox(width: 12),
 
-          
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -364,14 +413,14 @@ class _QuestionBankState extends State<QuestionBank> {
                 Row(
                   children: [
                     _tag(
-                      question['subject']!,
+                      subject,
                       primary,
                     ),
 
                     const SizedBox(width: 7),
 
                     _difficultyTag(
-                      question['difficulty']!,
+                      difficulty,
                     ),
                   ],
                 ),
@@ -379,7 +428,7 @@ class _QuestionBankState extends State<QuestionBank> {
                 const SizedBox(height: 8),
 
                 Text(
-                  question['question']!,
+                  questionText,
                   style: const TextStyle(
                     color: textColor,
                     fontSize: 14,
@@ -391,36 +440,43 @@ class _QuestionBankState extends State<QuestionBank> {
             ),
           ),
 
-          
           Column(
             children: [
+              // Edit
               IconButton(
                 visualDensity:
                     VisualDensity.compact,
-
                 icon: const Icon(
                   Icons.edit_outlined,
                   color: primary,
                   size: 21,
                 ),
-
                 onPressed: () {
-                  // Later Edit Question screen
-                },
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => EditQuestion(
+        documentId: documentId,
+        questionData: question,
+      ),
+    ),
+  );
+},
               ),
 
+              // Delete
               IconButton(
                 visualDensity:
                     VisualDensity.compact,
-
                 icon: const Icon(
                   Icons.delete_outline,
                   color: Colors.redAccent,
                   size: 21,
                 ),
-
                 onPressed: () {
-                  // Later Delete Question
+                  _deleteQuestion(
+                    documentId,
+                  );
                 },
               ),
             ],
@@ -430,7 +486,72 @@ class _QuestionBankState extends State<QuestionBank> {
     );
   }
 
- 
+  // Empty state
+  Widget _emptyState() {
+    return Container(
+      padding: const EdgeInsets.all(30),
+      alignment: Alignment.center,
+      child: Column(
+        children: [
+          Icon(
+            Icons.quiz_outlined,
+            size: 55,
+            color: accent,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'No questions found',
+            style: TextStyle(
+              color: textColor,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Try another search or filter.',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Delete question
+  Future<void> _deleteQuestion(
+    String documentId,
+  ) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('questions')
+          .doc(documentId)
+          .delete();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Question deleted successfully!',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Error deleting question: $e',
+          ),
+        ),
+      );
+    }
+  }
+
+  // Subject tag
   Widget _tag(
     String title,
     Color color,
@@ -440,13 +561,11 @@ class _QuestionBankState extends State<QuestionBank> {
         horizontal: 9,
         vertical: 4,
       ),
-
       decoration: BoxDecoration(
         color: color.withOpacity(0.10),
         borderRadius:
             BorderRadius.circular(20),
       ),
-
       child: Text(
         title,
         style: const TextStyle(
@@ -458,7 +577,7 @@ class _QuestionBankState extends State<QuestionBank> {
     );
   }
 
-  
+  // Difficulty tag
   Widget _difficultyTag(
     String difficulty,
   ) {
@@ -467,13 +586,11 @@ class _QuestionBankState extends State<QuestionBank> {
         horizontal: 9,
         vertical: 4,
       ),
-
       decoration: BoxDecoration(
         color: accent.withOpacity(0.25),
         borderRadius:
             BorderRadius.circular(20),
       ),
-
       child: Text(
         difficulty,
         style: const TextStyle(

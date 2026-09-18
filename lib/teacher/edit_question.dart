@@ -1,50 +1,95 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
-class AddQuestion extends StatefulWidget {
-  const AddQuestion({super.key});
+class EditQuestion extends StatefulWidget {
+  final String documentId;
+  final Map<String, dynamic> questionData;
+
+  const EditQuestion({
+    super.key,
+    required this.documentId,
+    required this.questionData,
+  });
 
   @override
-  State<AddQuestion> createState() => _AddQuestionState();
+  State<EditQuestion> createState() => _EditQuestionState();
 }
 
-class _AddQuestionState extends State<AddQuestion> {
-  // ================= COLORS =================
-
+class _EditQuestionState extends State<EditQuestion> {
   static const Color primary = Color(0xFF6D597A);
   static const Color dark = Color(0xFF44364D);
   static const Color accent = Color(0xFFDDBEA9);
   static const Color background = Color(0xFFF8F4F0);
   static const Color textColor = Color(0xFF332D35);
 
-  // ================= CONTROLLERS =================
+  late TextEditingController questionController;
+  late TextEditingController optionAController;
+  late TextEditingController optionBController;
+  late TextEditingController optionCController;
+  late TextEditingController optionDController;
+  late TextEditingController explanationController;
 
-  final TextEditingController questionController =
-      TextEditingController();
+  late String selectedSubject;
+  late String selectedDifficulty;
+  late String correctAnswer;
 
-  final TextEditingController optionAController =
-      TextEditingController();
-
-  final TextEditingController optionBController =
-      TextEditingController();
-
-  final TextEditingController optionCController =
-      TextEditingController();
-
-  final TextEditingController optionDController =
-      TextEditingController();
-
-  final TextEditingController explanationController =
-      TextEditingController();
-
-  // ================= DROPDOWN VALUES =================
-
-  String selectedSubject = 'Flutter';
-  String selectedDifficulty = 'Easy';
-  String correctAnswer = 'A';
-
-  // Loading state
   bool isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final data = widget.questionData;
+
+    questionController = TextEditingController(
+      text: data['question']?.toString() ?? '',
+    );
+
+    final options = data['options'] is List
+        ? List<String>.from(data['options'])
+        : <String>[];
+
+    optionAController = TextEditingController(
+      text: options.length > 0 ? options[0] : '',
+    );
+
+    optionBController = TextEditingController(
+      text: options.length > 1 ? options[1] : '',
+    );
+
+    optionCController = TextEditingController(
+      text: options.length > 2 ? options[2] : '',
+    );
+
+    optionDController = TextEditingController(
+      text: options.length > 3 ? options[3] : '',
+    );
+
+    explanationController = TextEditingController(
+      text: data['explanation']?.toString() ?? '',
+    );
+
+    selectedSubject =
+        data['subject']?.toString() ?? 'Flutter';
+
+    selectedDifficulty =
+        data['difficulty']?.toString() ?? 'Easy';
+
+    final int correctIndex =
+        data['correctAnswer1'] is int
+            ? data['correctAnswer1']
+            : int.tryParse(
+                  data['correctAnswer1']?.toString() ?? '',
+                ) ??
+                0;
+
+    const letters = ['A', 'B', 'C', 'D'];
+
+    correctAnswer =
+        correctIndex >= 0 && correctIndex < 4
+            ? letters[correctIndex]
+            : 'A';
+  }
 
   @override
   void dispose() {
@@ -63,8 +108,6 @@ class _AddQuestionState extends State<AddQuestion> {
     return Scaffold(
       backgroundColor: background,
 
-      // ================= APP BAR =================
-
       appBar: AppBar(
         backgroundColor: dark,
         elevation: 0,
@@ -80,7 +123,7 @@ class _AddQuestionState extends State<AddQuestion> {
         ),
 
         title: const Text(
-          'Add Question',
+          'Edit Question',
           style: TextStyle(
             color: Colors.white,
             fontSize: 19,
@@ -88,8 +131,6 @@ class _AddQuestionState extends State<AddQuestion> {
           ),
         ),
       ),
-
-      // ================= BODY =================
 
       body: Center(
         child: ConstrainedBox(
@@ -105,7 +146,7 @@ class _AddQuestionState extends State<AddQuestion> {
                   CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Create New Question',
+                  'Edit Question',
                   style: TextStyle(
                     color: textColor,
                     fontSize: 22,
@@ -116,7 +157,7 @@ class _AddQuestionState extends State<AddQuestion> {
                 const SizedBox(height: 5),
 
                 Text(
-                  'Add an MCQ to your question bank.',
+                  'Update the question details.',
                   style: TextStyle(
                     color: textColor.withOpacity(0.60),
                     fontSize: 13,
@@ -124,8 +165,6 @@ class _AddQuestionState extends State<AddQuestion> {
                 ),
 
                 const SizedBox(height: 22),
-
-                // ================= SUBJECT + DIFFICULTY =================
 
                 Row(
                   children: [
@@ -171,8 +210,6 @@ class _AddQuestionState extends State<AddQuestion> {
 
                 const SizedBox(height: 18),
 
-                // ================= QUESTION =================
-
                 _label('Question'),
 
                 const SizedBox(height: 7),
@@ -184,8 +221,6 @@ class _AddQuestionState extends State<AddQuestion> {
                 ),
 
                 const SizedBox(height: 20),
-
-                // ================= OPTIONS =================
 
                 const Text(
                   'Answer Options',
@@ -226,8 +261,6 @@ class _AddQuestionState extends State<AddQuestion> {
 
                 const SizedBox(height: 20),
 
-                // ================= CORRECT ANSWER =================
-
                 _label('Correct Answer'),
 
                 const SizedBox(height: 7),
@@ -236,7 +269,6 @@ class _AddQuestionState extends State<AddQuestion> {
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                   ),
-
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius:
@@ -245,7 +277,6 @@ class _AddQuestionState extends State<AddQuestion> {
                       color: accent.withOpacity(0.6),
                     ),
                   ),
-
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: correctAnswer,
@@ -286,8 +317,6 @@ class _AddQuestionState extends State<AddQuestion> {
 
                 const SizedBox(height: 20),
 
-                // ================= EXPLANATION =================
-
                 _label('Explanation'),
 
                 const SizedBox(height: 7),
@@ -301,15 +330,13 @@ class _AddQuestionState extends State<AddQuestion> {
 
                 const SizedBox(height: 25),
 
-                // ================= SAVE BUTTON =================
-
                 SizedBox(
                   width: double.infinity,
                   height: 50,
 
                   child: ElevatedButton.icon(
                     onPressed:
-                        isSaving ? null : _saveQuestion,
+                        isSaving ? null : _updateQuestion,
 
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
@@ -326,7 +353,6 @@ class _AddQuestionState extends State<AddQuestion> {
                         ? const SizedBox(
                             height: 20,
                             width: 20,
-
                             child:
                                 CircularProgressIndicator(
                               strokeWidth: 2,
@@ -339,9 +365,8 @@ class _AddQuestionState extends State<AddQuestion> {
 
                     label: Text(
                       isSaving
-                          ? 'Saving...'
-                          : 'Save Question',
-
+                          ? 'Updating...'
+                          : 'Update Question',
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -359,8 +384,6 @@ class _AddQuestionState extends State<AddQuestion> {
     );
   }
 
-  // ================= DROPDOWN =================
-
   Widget _dropdownField({
     required String label,
     required String value,
@@ -370,10 +393,8 @@ class _AddQuestionState extends State<AddQuestion> {
     return Column(
       crossAxisAlignment:
           CrossAxisAlignment.start,
-
       children: [
         _label(label),
-
         const SizedBox(height: 7),
 
         Container(
@@ -385,7 +406,6 @@ class _AddQuestionState extends State<AddQuestion> {
             color: Colors.white,
             borderRadius:
                 BorderRadius.circular(12),
-
             border: Border.all(
               color: accent.withOpacity(0.6),
             ),
@@ -415,8 +435,6 @@ class _AddQuestionState extends State<AddQuestion> {
       ],
     );
   }
-
-  // ================= OPTION FIELD =================
 
   Widget _optionField({
     required String letter,
@@ -457,8 +475,6 @@ class _AddQuestionState extends State<AddQuestion> {
     );
   }
 
-  // ================= TEXT FIELD =================
-
   Widget _textField({
     required TextEditingController controller,
     required String hint,
@@ -493,8 +509,7 @@ class _AddQuestionState extends State<AddQuestion> {
           borderSide: BorderSide.none,
         ),
 
-        enabledBorder:
-            OutlineInputBorder(
+        enabledBorder: OutlineInputBorder(
           borderRadius:
               BorderRadius.circular(12),
 
@@ -503,13 +518,11 @@ class _AddQuestionState extends State<AddQuestion> {
           ),
         ),
 
-        focusedBorder:
-            OutlineInputBorder(
+        focusedBorder: OutlineInputBorder(
           borderRadius:
               BorderRadius.circular(12),
 
-          borderSide:
-              const BorderSide(
+          borderSide: const BorderSide(
             color: primary,
             width: 1.5,
           ),
@@ -518,12 +531,9 @@ class _AddQuestionState extends State<AddQuestion> {
     );
   }
 
-  // ================= LABEL =================
-
   Widget _label(String text) {
     return Text(
       text,
-
       style: const TextStyle(
         color: textColor,
         fontSize: 14,
@@ -532,18 +542,14 @@ class _AddQuestionState extends State<AddQuestion> {
     );
   }
 
-  // ================= SAVE QUESTION =================
+  // ================= UPDATE QUESTION =================
 
-  Future<void> _saveQuestion() async {
-    // Check question
+  Future<void> _updateQuestion() async {
     if (questionController.text.trim().isEmpty) {
-      _showMessage(
-        'Please enter the question.',
-      );
+      _showMessage('Please enter the question.');
       return;
     }
 
-    // Check options
     if (optionAController.text.trim().isEmpty ||
         optionBController.text.trim().isEmpty ||
         optionCController.text.trim().isEmpty ||
@@ -559,7 +565,6 @@ class _AddQuestionState extends State<AddQuestion> {
     });
 
     try {
-      // Convert A/B/C/D into Firebase index
       int correctAnswerIndex = 0;
 
       if (correctAnswer == 'A') {
@@ -572,7 +577,6 @@ class _AddQuestionState extends State<AddQuestion> {
         correctAnswerIndex = 3;
       }
 
-      // Options array
       final List<String> options = [
         optionAController.text.trim(),
         optionBController.text.trim(),
@@ -580,10 +584,10 @@ class _AddQuestionState extends State<AddQuestion> {
         optionDController.text.trim(),
       ];
 
-      // Save to Firestore
       await FirebaseFirestore.instance
           .collection('questions')
-          .add({
+          .doc(widget.documentId)
+          .update({
         'question':
             questionController.text.trim(),
 
@@ -591,8 +595,6 @@ class _AddQuestionState extends State<AddQuestion> {
 
         'correctAnswer1':
             correctAnswerIndex,
-
-        'quizId': 'quiz001',
 
         'subject':
             selectedSubject,
@@ -603,7 +605,7 @@ class _AddQuestionState extends State<AddQuestion> {
         'explanation':
             explanationController.text.trim(),
 
-        'createdAt':
+        'updatedAt':
             FieldValue.serverTimestamp(),
       });
 
@@ -612,7 +614,7 @@ class _AddQuestionState extends State<AddQuestion> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Question added successfully!',
+            'Question updated successfully!',
           ),
         ),
       );
@@ -624,7 +626,7 @@ class _AddQuestionState extends State<AddQuestion> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Error saving question: $e',
+            'Error updating question: $e',
           ),
         ),
       );
@@ -636,8 +638,6 @@ class _AddQuestionState extends State<AddQuestion> {
       }
     }
   }
-
-  // ================= MESSAGE =================
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
