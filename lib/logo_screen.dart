@@ -34,8 +34,7 @@ class _LogoScreenState extends State<LogoScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController registerEmailController =
   TextEditingController();
-  final TextEditingController _passwordController =
-  TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
   TextEditingController();
 
@@ -45,7 +44,8 @@ class _LogoScreenState extends State<LogoScreen> {
 
   static const Color primary = Color(0xFF6F435C);
   static const Color lightBackground = Color(0xFFFFFBF0);
-  static const Color inputBackground = Color.fromARGB(255, 255, 227, 243);
+  static const Color inputBackground =
+  Color.fromARGB(255, 255, 227, 243);
 
   // ============================================================
   // LOGIN + ROLE NAVIGATION
@@ -53,14 +53,15 @@ class _LogoScreenState extends State<LogoScreen> {
 
   Future<void> _loginAndNavigate() async {
     if (selectedRole.isEmpty) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text("Please select a module first."),
-      backgroundColor: Colors.orange,
-    ),
-  );
-  return;
-}
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select a module first."),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -87,26 +88,18 @@ class _LogoScreenState extends State<LogoScreen> {
       }
 
       // ----------------------------------------------------------
-      // 2. Get user document from Firestore
+      // 2. Get user document from:
       // users/{uid}
       // ----------------------------------------------------------
-String collectionName;
 
-if (selectedRole == "Student") {
-  collectionName = "student";
-} else if (selectedRole == "Teacher") {
-  collectionName = "teacher";
-} else {
-  collectionName = "controller";
-}
-
-final DocumentSnapshot userDoc = await FirebaseFirestore.instance
-    .collection(collectionName)
-    .doc(user.uid)
-    .get();
-      
+      final DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
 
       if (!userDoc.exists) {
+        await FirebaseAuth.instance.signOut();
+
         if (!mounted) return;
 
         setState(() {
@@ -126,39 +119,46 @@ final DocumentSnapshot userDoc = await FirebaseFirestore.instance
       }
 
       // ----------------------------------------------------------
-      // 3. Read role
+      // 3. Read role from users/{uid}
       // ----------------------------------------------------------
 
       final data = userDoc.data() as Map<String, dynamic>;
 
       final String role =
       (data['role'] ?? '').toString().trim().toLowerCase();
-      final String selectedModule = selectedRole.trim().toLowerCase();
 
-        if (role != selectedModule) {
-       await FirebaseAuth.instance.signOut();
-
-        if (!mounted) return;
-
-         setState(() {
-         _isLoading = false;
-           });
-
-           ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(
-             content: Text(
-            "This account is not registered as ${selectedRole}.",
-               ),
-             backgroundColor: Colors.red,
-             ),
-              );
-
-               return;
-              }
+      final String selectedModule =
+      selectedRole.trim().toLowerCase();
 
       debugPrint("Logged in user: ${user.email}");
       debugPrint("Firebase UID: ${user.uid}");
       debugPrint("Firestore role: $role");
+      debugPrint("Selected role: $selectedModule");
+
+      // ----------------------------------------------------------
+      // 4. Check selected role
+      // ----------------------------------------------------------
+
+      if (role != selectedModule) {
+        await FirebaseAuth.instance.signOut();
+
+        if (!mounted) return;
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "This account is not registered as ${selectedRole}.",
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+
+        return;
+      }
 
       if (!mounted) return;
 
@@ -167,7 +167,7 @@ final DocumentSnapshot userDoc = await FirebaseFirestore.instance
       });
 
       // ----------------------------------------------------------
-      // 4. Navigate according to Firestore role
+      // 5. Navigate according to Firestore role
       // ----------------------------------------------------------
 
       if (role == 'student') {
@@ -192,7 +192,6 @@ final DocumentSnapshot userDoc = await FirebaseFirestore.instance
           ),
         );
       } else {
-        // Unknown role
         await FirebaseAuth.instance.signOut();
 
         if (!mounted) return;
@@ -294,33 +293,15 @@ final DocumentSnapshot userDoc = await FirebaseFirestore.instance
       // 2. Create users/{uid} document
       // ----------------------------------------------------------
 
-   
-         String collectionName;
-
-if (selectedRole == "Student") {
-  collectionName = "student";
-} else if (selectedRole == "Teacher") {
-  collectionName = "teacher";
-} else {
-  collectionName = "controller";
-}
-
-await FirebaseFirestore.instance
-    .collection(collectionName)
-    .doc(user.uid)
-    .set({
-  'name': nameController.text.trim(),
-  'email': registerEmailController.text.trim(),
-  'role': selectedRole,
-  'createdAt': FieldValue.serverTimestamp(),
-});
-         
-      //     .set({
-      //   'name': nameController.text.trim(),
-      //   'email': registerEmailController.text.trim(),
-      //   'role': selectedRole,
-      //   'createdAt': FieldValue.serverTimestamp(),
-      // });
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set({
+        'name': nameController.text.trim(),
+        'email': registerEmailController.text.trim(),
+        'role': selectedRole,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
       debugPrint("Registered user UID: ${user.uid}");
       debugPrint("Registered role: $selectedRole");
@@ -409,23 +390,24 @@ await FirebaseFirestore.instance
   // DEMO NAVIGATION
   // ============================================================
 
- void _openStudentDemo() {
-  setState(() {
-    selectedRole = "Student";
-  });
-}
+  void _openStudentDemo() {
+    setState(() {
+      selectedRole = "Student";
+    });
+  }
 
-void _openTeacherDemo() {
-  setState(() {
-    selectedRole = "Teacher";
-  });
-}
+  void _openTeacherDemo() {
+    setState(() {
+      selectedRole = "Teacher";
+    });
+  }
 
-void _openControllerDemo() {
-  setState(() {
-    selectedRole = "Controller";
-  });
-}
+  void _openControllerDemo() {
+    setState(() {
+      selectedRole = "Controller";
+    });
+  }
+
   // ============================================================
   // DISPOSE
   // ============================================================
@@ -700,7 +682,6 @@ void _openControllerDemo() {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Email
                         const Padding(
                           padding: EdgeInsets.only(
                             top: 8,
@@ -745,7 +726,6 @@ void _openControllerDemo() {
                           ),
                         ),
 
-                        // Password
                         const Padding(
                           padding: EdgeInsets.only(
                             left: 15,
@@ -803,7 +783,6 @@ void _openControllerDemo() {
                           ),
                         ),
 
-                        // Forgot password
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
@@ -818,7 +797,6 @@ void _openControllerDemo() {
                           ),
                         ),
 
-                        // Login button
                         Padding(
                           padding: const EdgeInsets.only(
                             left: 20,
@@ -890,7 +868,6 @@ void _openControllerDemo() {
 
                           const SizedBox(height: 10),
 
-                          // Full Name
                           const Text(
                             "Full Name:",
                             style: TextStyle(
@@ -921,7 +898,6 @@ void _openControllerDemo() {
 
                           const SizedBox(height: 15),
 
-                          // Email
                           const Text(
                             "Email:",
                             style: TextStyle(
@@ -957,7 +933,6 @@ void _openControllerDemo() {
 
                           const SizedBox(height: 15),
 
-                          // Password
                           const Text(
                             "Password:",
                             style: TextStyle(
@@ -1006,7 +981,6 @@ void _openControllerDemo() {
 
                           const SizedBox(height: 15),
 
-                          // Confirm Password
                           const Text(
                             "Confirm Password:",
                             style: TextStyle(
@@ -1057,7 +1031,6 @@ void _openControllerDemo() {
 
                           const SizedBox(height: 20),
 
-                          // Role selection title
                           const Text(
                             "Select Role:",
                             style: TextStyle(
@@ -1069,7 +1042,6 @@ void _openControllerDemo() {
 
                           const SizedBox(height: 12),
 
-                          // Role buttons
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
@@ -1114,7 +1086,6 @@ void _openControllerDemo() {
 
                           const SizedBox(height: 20),
 
-                          // Register button
                           SizedBox(
                             width: double.infinity,
                             height: 50,
@@ -1207,12 +1178,12 @@ void _openControllerDemo() {
 
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 15),
                   child: Row(
                     mainAxisAlignment:
                     MainAxisAlignment.spaceEvenly,
                     children: [
-                      // Student Demo
                       _roleCard(
                         role: "Student",
                         icon: Icons.school,
@@ -1221,7 +1192,6 @@ void _openControllerDemo() {
 
                       const SizedBox(width: 10),
 
-                      // Teacher Demo
                       _roleCard(
                         role: "Teacher",
                         icon: Icons.person,
@@ -1230,7 +1200,6 @@ void _openControllerDemo() {
 
                       const SizedBox(width: 10),
 
-                      // Controller Demo
                       _roleCard(
                         role: "Controller",
                         icon: Icons.admin_panel_settings,
