@@ -139,8 +139,7 @@ class _QuestionBankState extends State<QuestionBank> {
                         'Flutter',
                         'Web',
                         'Cybersecurity',
-                        'English',
-                        'Islamiat',
+
                       ],
                       onChanged: (value) {
                         setState(() {

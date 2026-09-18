@@ -62,7 +62,7 @@ class _UpcomingExamState extends State<UpcomingExam> {
     final quizzes = snapshot.data!.docs;
 
     return ListView.builder(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(25),
       itemCount: quizzes.length,
       itemBuilder: (context, index) {
 
@@ -82,7 +82,7 @@ class _UpcomingExamState extends State<UpcomingExam> {
                   quiz['title'] ?? 'Untitled Quiz',
                   style: const TextStyle(
                     color: Color(0xFF6F435C),
-                    fontSize: 20,
+                    fontSize: 25,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -90,8 +90,12 @@ class _UpcomingExamState extends State<UpcomingExam> {
                 const SizedBox(height: 8),
 
                 Text(
-                  "${quiz['totalQuestions'] ?? 0} Questions • "
+                  "${quiz['totalQuestion'] ?? 0} Questions • "
                   "${quiz['duration'] ?? 0} Minutes",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
 
                 Align(
@@ -102,12 +106,24 @@ class _UpcomingExamState extends State<UpcomingExam> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => QuizScreen(
-                           quizId: quiz['quizId'],
+                         quizId: quizzes[index].id,
                           ),
                         ),
                       );
                     },
-                    child: const Text("Start"),
+                     style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6F435C),
+                        foregroundColor: const Color(0xFFFFFBF0),
+                        elevation: 3,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    child: const Text("Start",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),),
                   ),
                 ),
               ],

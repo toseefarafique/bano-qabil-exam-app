@@ -52,6 +52,15 @@ class _LogoScreenState extends State<LogoScreen> {
   // ============================================================
 
   Future<void> _loginAndNavigate() async {
+    if (selectedRole.isEmpty) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text("Please select a module first."),
+      backgroundColor: Colors.orange,
+    ),
+  );
+  return;
+}
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -81,11 +90,21 @@ class _LogoScreenState extends State<LogoScreen> {
       // 2. Get user document from Firestore
       // users/{uid}
       // ----------------------------------------------------------
+String collectionName;
 
-      final DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+if (selectedRole == "Student") {
+  collectionName = "student";
+} else if (selectedRole == "Teacher") {
+  collectionName = "teacher";
+} else {
+  collectionName = "controller";
+}
+
+final DocumentSnapshot userDoc = await FirebaseFirestore.instance
+    .collection(collectionName)
+    .doc(user.uid)
+    .get();
+      
 
       if (!userDoc.exists) {
         if (!mounted) return;
@@ -114,6 +133,28 @@ class _LogoScreenState extends State<LogoScreen> {
 
       final String role =
       (data['role'] ?? '').toString().trim().toLowerCase();
+      final String selectedModule = selectedRole.trim().toLowerCase();
+
+        if (role != selectedModule) {
+       await FirebaseAuth.instance.signOut();
+
+        if (!mounted) return;
+
+         setState(() {
+         _isLoading = false;
+           });
+
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(
+             content: Text(
+            "This account is not registered as ${selectedRole}.",
+               ),
+             backgroundColor: Colors.red,
+             ),
+              );
+
+               return;
+              }
 
       debugPrint("Logged in user: ${user.email}");
       debugPrint("Firebase UID: ${user.uid}");
@@ -253,15 +294,33 @@ class _LogoScreenState extends State<LogoScreen> {
       // 2. Create users/{uid} document
       // ----------------------------------------------------------
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set({
-        'name': nameController.text.trim(),
-        'email': registerEmailController.text.trim(),
-        'role': selectedRole,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+   
+         String collectionName;
+
+if (selectedRole == "Student") {
+  collectionName = "student";
+} else if (selectedRole == "Teacher") {
+  collectionName = "teacher";
+} else {
+  collectionName = "controller";
+}
+
+await FirebaseFirestore.instance
+    .collection(collectionName)
+    .doc(user.uid)
+    .set({
+  'name': nameController.text.trim(),
+  'email': registerEmailController.text.trim(),
+  'role': selectedRole,
+  'createdAt': FieldValue.serverTimestamp(),
+});
+         
+      //     .set({
+      //   'name': nameController.text.trim(),
+      //   'email': registerEmailController.text.trim(),
+      //   'role': selectedRole,
+      //   'createdAt': FieldValue.serverTimestamp(),
+      // });
 
       debugPrint("Registered user UID: ${user.uid}");
       debugPrint("Registered role: $selectedRole");
@@ -350,45 +409,23 @@ class _LogoScreenState extends State<LogoScreen> {
   // DEMO NAVIGATION
   // ============================================================
 
-  void _openStudentDemo() {
-    setState(() {
-      selectedRole = "Student";
-    });
+ void _openStudentDemo() {
+  setState(() {
+    selectedRole = "Student";
+  });
+}
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const HomeScreen(),
-      ),
-    );
-  }
+void _openTeacherDemo() {
+  setState(() {
+    selectedRole = "Teacher";
+  });
+}
 
-  void _openTeacherDemo() {
-    setState(() {
-      selectedRole = "Teacher";
-    });
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const TeacherDashboard(),
-      ),
-    );
-  }
-
-  void _openControllerDemo() {
-    setState(() {
-      selectedRole = "Controller";
-    });
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const ControllerDashboard(),
-      ),
-    );
-  }
-
+void _openControllerDemo() {
+  setState(() {
+    selectedRole = "Controller";
+  });
+}
   // ============================================================
   // DISPOSE
   // ============================================================

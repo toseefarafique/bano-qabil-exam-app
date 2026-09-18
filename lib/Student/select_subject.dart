@@ -1,7 +1,7 @@
 import 'Quiz_Screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SelectSubject extends StatefulWidget {
   final String subjectName;
@@ -205,104 +205,86 @@ class _SelectSubjectState extends State<SelectSubject> {
     );
   },
 )
+else
+  StreamBuilder<QuerySnapshot>(
+    stream: FirebaseFirestore.instance
+        .collection('result')
+        .where(
+          'studentId',
+          isEqualTo: FirebaseAuth.instance.currentUser?.uid,
+        )
+        .snapshots(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      }
 
+      if (snapshot.hasError) {
+        return const Center(
+          child: Text("Something went wrong"),
+        );
+      }
+
+      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        return const Padding(
+          padding: EdgeInsets.all(20),
+          child: Text("No Quiz History Yet"),
+        );
+      }
+
+      final results = snapshot.data!.docs;
+
+      return Padding(
+        padding: const EdgeInsets.only(left: 20, right: 20),
+        child: Column(
+          children: results.map((doc) {
+            final data =
+                doc.data() as Map<String, dynamic>;
+
+            return Card(
+              elevation: 2,
+              color: Colors.white,
+              child: ListTile(
+                leading: const Icon(Icons.quiz),
+                title: Text(
+                  data['quizId'] ?? 'Quiz',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  "Score: ${data['score']}/${data['totalQuestion']}",
+                ),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "${data['percentage']}%",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      "Completed",
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    },
+  ),
     
-      else
-     Padding(padding: EdgeInsets.only(left: 20,right: 20),
-     child: Column(
-
-    children: [
-      Card(
-        elevation: 2,
-        color: Colors.white,
-        child: ListTile(
-          leading: const Icon(Icons.quiz),
-          title: const Text('Flutter Basics'),
-          subtitle: const Text(
-            'Score: 12/15  •  11 Sep 2026',
-          ),
-          trailing: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '80%',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                'Completed',
-                style: TextStyle(
-              color: Colors.green,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      SizedBox(height: 8),
-      Card(
-        elevation: 2,
-        color: Colors.white,
-        child: ListTile(
-          leading: const Icon(Icons.quiz),
-          title: const Text('Flutter Widgets'),
-          subtitle: const Text(
-            'Score: 17/20  •  10 Sep 2026',
-          ),
-          trailing: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '85%',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                'Completed',
-                style: TextStyle(
-                  color: Colors.green,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-     SizedBox(height: 8),
-      Card(
-        elevation: 2,
-        color: Colors.white,
-        child: ListTile(
-          leading: const Icon(Icons.quiz),
-          title: const Text('Dart Basics'),
-          subtitle: const Text(
-            'Score: 14/15  •  08 Sep 2026',
-          ),
-          trailing: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '93%',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                'Completed',
-                style: TextStyle(
-                  color: Colors.green,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ],
-  ),)
+     
+ 
    
             ],
           )
