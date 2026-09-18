@@ -40,25 +40,77 @@ class _AttemptsResultsState extends State<AttemptsResults> {
     }
   }
 
-  // ================= GET STUDENT NAME =================
+  
+// ================= GET STUDENT NAME =================
   Future<String> _getStudentName(String studentId) async {
+    if (studentId.isEmpty) {
+      return 'Unknown Student';
+    }
+
     try {
-      final doc = await FirebaseFirestore.instance
+      // ============================================================
+      // FIRST: Check users collection
+      // Firebase Auth UID is normally used as the document ID here.
+      // ============================================================
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(studentId)
+          .get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data();
+
+        if (data != null) {
+          final name = data['name'] ??
+              data['fullName'] ??
+              data['displayName'] ??
+              data['studentName'];
+
+          if (name != null &&
+              name.toString().trim().isNotEmpty) {
+            return name.toString();
+          }
+        }
+      }
+
+      // ============================================================
+      // SECOND: Check student collection
+      // This keeps compatibility with your existing student records.
+      // ============================================================
+
+      final studentDoc = await FirebaseFirestore.instance
           .collection('student')
           .doc(studentId)
           .get();
 
-      if (doc.exists) {
-        final data = doc.data();
+      if (studentDoc.exists) {
+        final data = studentDoc.data();
 
-        return data?['name']?.toString() ?? 'Unknown Student';
+        if (data != null) {
+          final name = data['name'] ??
+              data['fullName'] ??
+              data['displayName'] ??
+              data['studentName'];
+
+          if (name != null &&
+              name.toString().trim().isNotEmpty) {
+            return name.toString();
+          }
+        }
       }
 
       return 'Unknown Student';
     } catch (e) {
+      debugPrint(
+        'Error getting student name: $e',
+      );
+
       return 'Unknown Student';
     }
   }
+
+
 
   // ================= QUIZ FILTER =================
   Widget _quizFilter() {
