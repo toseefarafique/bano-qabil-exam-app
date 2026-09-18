@@ -287,9 +287,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         crossAxisCount: 2,
-                        childAspectRatio: 1.7,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
+                        childAspectRatio: 2.8,
+                        crossAxisSpacing: 4,
+                        mainAxisSpacing: 4,
                         children: [
                           _StatCard(
                             icon: Icons.quiz_outlined,
