@@ -1,8 +1,11 @@
 
+import 'package:bano_qabil_exam/Student/notification.dart';
+
 import 'History.dart';
 import 'Upcoming_Exam.dart';
 import 'home_screen.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 // import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,44 +25,32 @@ class profile extends StatefulWidget {
 }
 
 class _profileState extends State<profile> {
+String studentName = "Student";
+  @override
+void initState() {
+  super.initState();
+  _loadStudentName();
+}
 
-  // String patientName = "Patient";
+ Future<void> _loadStudentName() async {
+  final user = FirebaseAuth.instance.currentUser;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _loadPatientName();
-  // }
+  if (user == null) return;
 
-  // // ============================================================
-  // // LOAD LOGGED-IN PATIENT NAME
-  // // ============================================================
+  final query = await FirebaseFirestore.instance
+      .collection('student')
+      .where('email', isEqualTo: user.email)
+      .limit(1)
+      .get();
 
-  // Future<void> _loadPatientName() async {
-  //   try {
-  //     final user = FirebaseAuth.instance.currentUser;
+  if (query.docs.isNotEmpty) {
+    setState(() {
+      studentName = query.docs.first.data()['name'] ?? "Student";
+    });
+  }
+}
 
-  //     if (user == null) return;
-
-  //     final query = await FirebaseFirestore.instance
-  //         .collection('patients')
-  //         .where('email', isEqualTo: user.email)
-  //         .limit(1)
-  //         .get();
-
-  //     if (query.docs.isNotEmpty) {
-  //       final data = query.docs.first.data();
-
-  //       if (mounted) {
-  //         setState(() {
-  //           patientName = data['name'] ?? "Patient";
-  //         });
-  //       }
-  //     }
-  //   } catch (e) {
-  //     debugPrint("Error loading patient name: $e");
-  //   }
-  // }
+ 
 
 
   @override
@@ -248,7 +239,7 @@ class _profileState extends State<profile> {
 
                             children: [
                               Text(
-                                "Student",
+                                studentName,
                                 style: const TextStyle(
                                   color: Colors.black,
                                   fontWeight: FontWeight.bold,
@@ -260,7 +251,7 @@ class _profileState extends State<profile> {
                               const SizedBox(height: 5),
 
                               const Text(
-                                "Patient",
+                                "Student",
                                 style: TextStyle(
                                   color: Colors.black87,
                                   fontWeight: FontWeight.bold,
@@ -271,7 +262,7 @@ class _profileState extends State<profile> {
                               const SizedBox(height: 5),
 
                               const Text(
-                                "Taking Care of yourself",
+                              "Keep learning and improving",
                                 style: TextStyle(
                                   color: Colors.black54,
                                   fontWeight: FontWeight.w600,
@@ -308,30 +299,43 @@ class _profileState extends State<profile> {
                       const SizedBox(height: 15),
 
                       _settingTile(
+                        onTap: (){},
                         icon: Icons.person_outline,
                         title: "Personal Information",
                         subtitle: "Manage your personal details",
                       ),
 
                       _settingTile(
+                        onTap: (){},
                         icon: Icons.lock_outline,
                         title: "Change Password",
                         subtitle: "Update your account password",
                       ),
 
                       _settingTile(
+                        onTap: (){
+                           Navigator.push(
+                             context,
+                        MaterialPageRoute(
+                            builder: (context) => NotificationScreen(),
+                             ),
+                             );
+                        },
                         icon: Icons.notifications_none,
                         title: "Notifications",
                         subtitle: "Manage notification settings",
+                    
                       ),
 
                       _settingTile(
+                        onTap: (){},
                         icon: Icons.help_outline,
                         title: "Help & Support",
                         subtitle: "Get help with the application",
                       ),
 
                       _settingTile(
+                        onTap: (){},
                         icon: Icons.logout,
                         title: "Logout",
                         subtitle: "Sign out from your account",
@@ -427,6 +431,7 @@ class _profileState extends State<profile> {
     required IconData icon,
     required String title,
     required String subtitle,
+      required VoidCallback onTap,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -466,7 +471,7 @@ class _profileState extends State<profile> {
           size: 17,
         ),
 
-        onTap: () {},
+     onTap: onTap, 
       ),
     );
   }
