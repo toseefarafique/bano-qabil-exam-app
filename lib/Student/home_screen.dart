@@ -188,47 +188,61 @@ Future<String> getPracticeStreak() async {
                 color:  Color(0xFFFFFBF0),
                 size: 55,),
                 ),
-                
-               Padding(padding: EdgeInsetsGeometry.only(left: 10),
-               child: Row(
-                children: [
-                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                     Text("Assalam-o-Alaikum",
-                    style: TextStyle(
-                      color: Color(0xFF6F435C),
-                      fontSize: 15,
-                      
-                    ),),
-                    FutureBuilder<String>(
-                       future: getStudentName(),
-                        builder: (context, snapshot) {
-                        return Text(
-                       snapshot.data ?? "Student",
-                      style: TextStyle(
-                       color: Color(0xFF6F435C),
-                       fontSize: 25,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      );
-                      },
-                     ),
-                   
-                    Text("Keep going! you're doing great!",
-                    style: TextStyle(
-                      color: Color(0xFF6F435C),
-                      fontSize: 15,
-                      
-                    ),),
-                  ],
+                SizedBox(width: 10),
+              //  
+              Expanded(
+  child: Padding(
+    padding: const EdgeInsets.only(left: 10),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Assalam-o-Alaikum",
+                style: TextStyle(
+                  color: Color(0xFF6F435C),
+                  fontSize: 15,
                 ),
-                Image.asset('assets/images/girl2_pic.png',
-                height: 160,
-                width: 160,
-                fit: BoxFit.contain,)
-                ],
-               ),),
+              ),
+
+              FutureBuilder<String>(
+                future: getStudentName(),
+                builder: (context, snapshot) {
+                  return Text(
+                    snapshot.data ?? "Student",
+                    style: TextStyle(
+                      color: Color(0xFF6F435C),
+                      fontSize: 25,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  );
+                },
+              ),
+
+              Text(
+                "Keep going! you're doing great!",
+                style: TextStyle(
+                  color: Color(0xFF6F435C),
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        Image.asset(
+          'assets/images/girl2_pic.png',
+          height: 180,
+          width: 200,
+          fit: BoxFit.contain,
+        ),
+      ],
+    ),
+  ),
+),
               ],
             ),
           ),
@@ -273,7 +287,7 @@ Future<String> getPracticeStreak() async {
                  fontWeight: FontWeight.bold, 
                  fontSize: 15, 
                 ),),
-                  Text("20 Question . 20 Minutes",
+                  Text("10 Question . 20 Minutes",
                 style: TextStyle(
                  color: Color(0xFF6F435C),
                  fontWeight: FontWeight.bold, 
@@ -382,8 +396,8 @@ Future<String> getPracticeStreak() async {
             )
           ],
         ),
-    
-      Align(
+    Padding(padding: EdgeInsets.only(left: 16,top: 5,bottom: 10),
+     child:Align(
         alignment: Alignment.centerLeft,
          child:Text("Subject",
       style: TextStyle(
@@ -393,94 +407,139 @@ Future<String> getPracticeStreak() async {
       ),)
       
       ),
- 
-            StreamBuilder<QuerySnapshot>(
+    ),
+//            
+StreamBuilder<QuerySnapshot>(
   stream: getSubjects(),
   builder: (context, snapshot) {
     if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF6F435C),
+          ),
+        ),
       );
     }
 
     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-      return const Center(
-        child: Text("No Subjects Available"),
+      return const Padding(
+        padding: EdgeInsets.all(20),
+        child: Center(
+          child: Text("No Subjects Available"),
+        ),
       );
     }
 
-    return Wrap(
-      children: snapshot.data!.docs.map((doc) {
-        var data = doc.data() as Map<String, dynamic>;
+    final subjects = snapshot.data!.docs;
 
-        String name = data['name'] ?? "Subject";
-        int quizCount = data['quizCount'] ?? 0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = (constraints.maxWidth - 52) / 2;
 
-        IconData icon = Icons.book;
+        return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+         child:Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 18,
+          runSpacing: 16,
+          children: subjects.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
 
-        if (name == "Flutter") {
-          icon = Icons.flutter_dash;
-        } else if (name == "Web") {
-          icon = Icons.web;
-        } else if (name == "Cybersecurity") {
-          icon = Icons.security;
-        }
+            final String name = data['name'] ?? "Subject";
+            final int quizCount = data['quizCount'] ?? 0;
 
-        return Card(
-          elevation: 3,
-          color: Colors.white,
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>  SelectSubject(
-                    subjectName: name,
-                     subjectId: doc.id,
+            IconData icon = Icons.menu_book_rounded;
+
+            if (name.toLowerCase().contains("flutter")) {
+              icon = Icons.flutter_dash;
+            } else if (name.toLowerCase().contains("web")) {
+              icon = Icons.language_rounded;
+            } else if (name.toLowerCase().contains("cyber")) {
+              icon = Icons.security_rounded;
+            }
+
+            return SizedBox(
+              width: cardWidth,
+              height: 82,
+              child: Card(
+                elevation: 3,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(15),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SelectSubject(
+                          subjectName: name,
+                          subjectId: doc.id,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          icon,
+                          size: 34,
+                          color: const Color(0xFF6F435C),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Color(0xFF222222),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 17,
+                                ),
+                              ),
+
+                              const SizedBox(height: 3),
+
+                              Text(
+                               "1 Quizzes",
+                                style: const TextStyle(
+                                  color: Colors.black45,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              );
-            },
-            child: Container(
-              width: 200,
-              padding: const EdgeInsets.all(10),
-              child: Row(
-                children: [
-                  Icon(
-                    icon,
-                    size: 35,
-                    color: const Color(0xFF6F435C),
-                  ),
-                  const SizedBox(width: 20),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                      Text(
-                        "$quizCount Quizes",
-                        style: const TextStyle(
-                          color: Colors.black38,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ),
-            ),
-          ),
+            );
+          }).toList(),
+        ),
         );
-      }).toList(),
+      },
     );
   },
 ),
+
          
         ], 
      ),
