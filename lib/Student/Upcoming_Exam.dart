@@ -1,8 +1,9 @@
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'History.dart';
 import 'home_screen.dart';
 import 'profile_user.dart';
 import 'package:flutter/material.dart';
+import 'Quiz_Screen.dart';
 
 class UpcomingExam extends StatefulWidget {
   const UpcomingExam({super.key});
@@ -32,94 +33,91 @@ class _UpcomingExamState extends State<UpcomingExam> {
           fontWeight: FontWeight.bold,
         ),),
       ),
-      body: SingleChildScrollView(
-        child: Container(
-          child:Padding(padding: EdgeInsets.all(20),
-          child: Column(
-            children: [
-             Card(
-          elevation: 2,
-          color:  Color(0xFFFFFBF0),
-         child: Padding(padding: EdgeInsets.all(20),
-         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Flutter Widgets",
-            style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-            ),),
-            SizedBox(height: 8),
-            Text("Practice . 20 Questions . 20 Minutes",
-            style: TextStyle(
-              fontSize: 15,
-            ),),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(onPressed: (){},
-              style: ElevatedButton.styleFrom(
-                backgroundColor:  Color(0xFF6F435C),
-                foregroundColor: Color(0xFFFFFBF0),
-                elevation: 3,
-                
-              shape:RoundedRectangleBorder(
-                
-                borderRadius: BorderRadius.circular(10),
-              ) 
-              ),
-               child: Text("Start",
-               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-               ),)),
-            )
-          ],
-         ),), 
+    //  
+    body: StreamBuilder<QuerySnapshot>(
+  stream: FirebaseFirestore.instance
+      .collection('quizzes')
+      .where('status', isEqualTo: 'upcoming')
+      .snapshots(),
+  builder: (context, snapshot) {
+
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+      return const Center(
+        child: Text(
+          "No Upcoming Exams",
+          style: TextStyle(
+            color: Color(0xFFFFFBF0),
+            fontSize: 18,
+          ),
         ),
-        SizedBox(height: 10),
-        Card(
+      );
+    }
+
+    final quizzes = snapshot.data!.docs;
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(20),
+      itemCount: quizzes.length,
+      itemBuilder: (context, index) {
+
+        final quiz = quizzes[index].data() as Map<String, dynamic>;
+
+        return Card(
+          color: const Color(0xFFFFFBF0),
           elevation: 2,
-            color:  Color(0xFFFFFBF0),
-         child: Padding(padding: EdgeInsets.all(20),
-         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Flutter Widgets",
-            style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-            ),),
-            SizedBox(height: 8),
-            Text("Practice . 20 Questions . 20 Minutes",
-            style: TextStyle(
-              fontSize: 15,
-            ),),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(onPressed: (){},
-              style: ElevatedButton.styleFrom(
-                backgroundColor:  Color(0xFF6F435C),
-                foregroundColor: Color(0xFFFFFBF0),
-                elevation: 3,
-                
-              shape:RoundedRectangleBorder(
-                
-                borderRadius: BorderRadius.circular(10),
-              ) 
-              ),
-               child: Text("Start",
-               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-               ),)),
-            )
-          ],
-         ),), 
-        )
-            ],
-          ),),
-        ),
-      ),
+          margin: const EdgeInsets.only(bottom: 10),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                Text(
+                  quiz['title'] ?? 'Untitled Quiz',
+                  style: const TextStyle(
+                    color: Color(0xFF6F435C),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                Text(
+                  "${quiz['totalQuestions'] ?? 0} Questions • "
+                  "${quiz['duration'] ?? 0} Minutes",
+                ),
+
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QuizScreen(
+                           quizId: quiz['quizId'],
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text("Start"),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  },
+),
        bottomNavigationBar: BottomNavigationBar(
       currentIndex: 1,
   

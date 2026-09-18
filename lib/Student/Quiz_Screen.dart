@@ -20,6 +20,7 @@ class _QuizScreenState extends State<QuizScreen> {
   QuerySnapshot snapshot = await FirebaseFirestore.instance
       .collection('questions')
       .where('quizId', isEqualTo: widget.quizId)
+     .orderBy(FieldPath.documentId)
       .get();
 
   return snapshot.docs.map((doc) {
@@ -32,6 +33,9 @@ Future<void> loadQuestions() async {
   if (mounted) {
     setState(() {
       questions = data;
+       userAnswers = List<int?>.filled(data.length, null);
+       submittedQuestions = List<bool>.filled(data.length, false);
+       flaggedQuestions = List<bool>.filled(data.length, false);
       isLoading = false;
     });
   }
@@ -44,6 +48,9 @@ bool isLoading = true;
   int correctAnswer = 0;
   int score = 0;
   Timer? _timer;
+  List<int?> userAnswers = [];
+List<bool> submittedQuestions = []; 
+List<bool> flaggedQuestions = [];
 
 Duration _remainingTime = const Duration(minutes: 30);
 Duration _timeUsed = Duration.zero;
@@ -204,11 +211,14 @@ int correct = questions[currentQuestion]['correctAnswer'] ?? 0;
             SizedBox(height: 20),
        // A
 GestureDetector(
-  onTap: () {
-    setState(() {
-      selectedOption = 0;
-    });
-  },
+ onTap: submittedQuestions[currentQuestion]
+    ? null
+    : () {
+        setState(() {
+          selectedOption = 0;
+          userAnswers[currentQuestion] = 0;
+        });
+      },
   child: Container(
     width: double.infinity,
     padding: EdgeInsets.symmetric(
@@ -238,11 +248,14 @@ SizedBox(height: 12),
 
 // B
 GestureDetector(
-  onTap: () {
-    setState(() {
-      selectedOption = 1;
-    });
-  },
+ onTap: submittedQuestions[currentQuestion]
+    ? null
+    : () {
+        setState(() {
+          selectedOption = 1;
+          userAnswers[currentQuestion] = 1;
+        });
+      },
   child: Container(
     width: double.infinity,
     padding: EdgeInsets.symmetric(
@@ -272,11 +285,14 @@ SizedBox(height: 12),
 
 // C
 GestureDetector(
-  onTap: () {
-    setState(() {
-      selectedOption = 2;
-    });
-  },
+ onTap: submittedQuestions[currentQuestion]
+    ? null
+    : () {
+        setState(() {
+          selectedOption = 2;
+          userAnswers[currentQuestion] = 2;
+        });
+      },
   child: Container(
     width: double.infinity,
     padding: EdgeInsets.symmetric(
@@ -306,11 +322,14 @@ SizedBox(height: 12),
 
 // D
 GestureDetector(
-  onTap: () {
-    setState(() {
-      selectedOption = 3;
-    });
-  },
+  onTap: submittedQuestions[currentQuestion]
+    ? null
+    : () {
+        setState(() {
+          selectedOption = 3;
+          userAnswers[currentQuestion] = 3;
+        });
+      },
   child: Container(
     width: double.infinity,
     padding: EdgeInsets.symmetric(
@@ -340,7 +359,10 @@ GestureDetector(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           TextButton(onPressed:(){
-
+                 setState(() {
+              flaggedQuestions[currentQuestion] =
+              !flaggedQuestions[currentQuestion];
+              });
           },
           style: TextButton.styleFrom(
             backgroundColor: const Color.fromARGB(255, 241, 232, 243),
@@ -359,9 +381,13 @@ GestureDetector(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.flag,
-              color: Color(0xFF6F435C),
-              size: 25,),
+             Icon(
+                  flaggedQuestions[currentQuestion]
+                   ? Icons.flag
+                      : Icons.outlined_flag,
+                     color: Color(0xFF6F435C),
+                      size: 25,
+                    ),
               Text("Flag",
               style: TextStyle(
                 color: Color(0xFF6F435C),
@@ -372,7 +398,39 @@ GestureDetector(
           )),),
           SizedBox(width: 30),
          TextButton(onPressed:(){
+               showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Jump To Question"),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: GridView.builder(
+            shrinkWrap: true,
+            itemCount: questions.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+            ),
+            itemBuilder: (context, index) {
+              return ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
 
+                  setState(() {
+                    currentQuestion = index;
+                    selectedOption = userAnswers[index];
+                  });
+                },
+                child: Text("${index + 1}"),
+              );
+            },
+          ),
+        ),
+      );
+    },
+  );
           },
           
           style: TextButton.styleFrom(
@@ -393,9 +451,9 @@ GestureDetector(
            child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.arrow_upward,
-              color: Color(0xFF6F435C),
-              size: 25,),
+            Icon(Icons.arrow_upward,
+             color: Color(0xFF6F435C),
+             size: 25,),
               Text("Jump To",
               style: TextStyle(
                 color: Color(0xFF6F435C),
@@ -411,7 +469,14 @@ GestureDetector(
        child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          ElevatedButton(onPressed: (){},
+          ElevatedButton(onPressed: currentQuestion > 0
+      ? () {
+          setState(() {
+            currentQuestion--;
+            selectedOption = userAnswers[currentQuestion];
+          });
+        }
+      : null,
           style: ElevatedButton.styleFrom(
              backgroundColor: Color(0xFF6F435C),
              foregroundColor: Color(0xFFFFFBF0),
@@ -429,7 +494,18 @@ GestureDetector(
             ),
            ),),
           SizedBox(width: 80),
-           ElevatedButton(onPressed: () async{
+           ElevatedButton(onPressed: () async {
+  if (submittedQuestions[currentQuestion]) {
+    // Already submitted hai, sirf next question par jao
+    if (currentQuestion < questions.length - 1) {
+      setState(() {
+        currentQuestion++;
+        selectedOption = userAnswers[currentQuestion];
+      });
+    }
+    return;
+  }
+
   if (selectedOption == null) {
     debugPrint("Please select an option");
     return;
@@ -442,23 +518,28 @@ GestureDetector(
     debugPrint("Wrong Answer");
   }
 
+  submittedQuestions[currentQuestion] = true;
+
   if (currentQuestion < questions.length - 1) {
     setState(() {
       currentQuestion++;
       selectedOption = null;
     });
   } else {
-     await saveResult();
+    await saveResult();
 
-      Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => ResultScreen(
-        score: score,
-        totalQuestions: questions.length,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ResultScreen(
+          score: score,
+          totalQuestions: questions.length,
+          timeUsed: _timeUsed,
+          quizId: widget.quizId,
+          userAnswers: userAnswers,
+        ),
       ),
-    ),
-  );
+    );
   }
 },
           style: ElevatedButton.styleFrom(

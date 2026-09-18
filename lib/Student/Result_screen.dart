@@ -5,11 +5,17 @@ import 'package:flutter/material.dart';
 class ResultScreen extends StatefulWidget {
   final int score;
   final int totalQuestions;
+  final Duration timeUsed;
+  final List<int?> userAnswers;
+  final String quizId;
 
   const ResultScreen({
     super.key,
     required this.score,
     required this.totalQuestions,
+    required this.timeUsed,
+    required this.quizId,
+    required this.userAnswers,
 });
 
   @override
@@ -19,6 +25,8 @@ class ResultScreen extends StatefulWidget {
 class _ResultScreenState extends State<ResultScreen> {
   @override
   Widget build(BuildContext context) {
+    final percentage = (widget.score / widget.totalQuestions * 100).round();
+    final isPassed = percentage >= 50;
     return Scaffold(
       appBar: AppBar(
         backgroundColor:Color(0xFFFFFBF0),
@@ -78,7 +86,7 @@ class _ResultScreenState extends State<ResultScreen> {
                       fontSize: 20,
                        color: Color(0xFF6F435C),
                     ),),
-                     Text("16/20",
+                     Text("${widget.score}/${widget.totalQuestions}",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 28,
@@ -103,7 +111,7 @@ class _ResultScreenState extends State<ResultScreen> {
                       fontSize: 20,
                        color: Color(0xFF6F435C),
                     ),),
-                     Text("80%",
+                     Text("$percentage%",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 28,
@@ -118,14 +126,18 @@ class _ResultScreenState extends State<ResultScreen> {
              Padding(padding: EdgeInsets.all(20),
              child:Card(
               elevation: 2,
-              color: const Color.fromARGB(255, 205, 241, 206),
+              color: isPassed
+            ? const Color.fromARGB(255, 205, 241, 206)
+            : const Color.fromARGB(255, 248, 210, 210),
              child:Padding(padding: EdgeInsets.all(20),
              child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.verified,
-                color: Colors.green,
-                size: 70,),
+              Icon(
+                isPassed ? Icons.verified : Icons.cancel,
+                  color: isPassed ? Colors.green : Colors.red,
+                  size: 70,
+                  ),
                 SizedBox(width: 10),
               Column(
                 children: [
@@ -134,12 +146,14 @@ class _ResultScreenState extends State<ResultScreen> {
                     color: Colors.green,
                     fontSize: 18,
                   ),),
-                   Text("Pass",
-                  style: TextStyle(
-                    color: Colors.green,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                  ),),
+                  Text(
+                   isPassed ? "Pass" : "Fail",
+                    style: TextStyle(
+                    color: isPassed ? Colors.green : Colors.red,
+                     fontSize: 30,
+                     fontWeight: FontWeight.bold,
+                     ),
+                    ),
                 ],
               )  
               ],
@@ -161,7 +175,8 @@ class _ResultScreenState extends State<ResultScreen> {
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF6F435C),
                   ),),
-                   Text("16m 56s",
+                   Text(
+                   "${widget.timeUsed.inMinutes}m ${widget.timeUsed.inSeconds % 60}s",
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
@@ -174,7 +189,10 @@ class _ResultScreenState extends State<ResultScreen> {
              SizedBox(height: 20),
              ElevatedButton(onPressed: (){
               Navigator.push(context,
-              MaterialPageRoute(builder: (context)=> ReviewAnswer()));
+              MaterialPageRoute(builder: (context)=> ReviewAnswer(
+                  quizId: widget.quizId,
+                  userAnswers: widget.userAnswers,
+              )));
              },
              
              style: ElevatedButton.styleFrom(
@@ -195,8 +213,11 @@ class _ResultScreenState extends State<ResultScreen> {
               ),)),),
               Padding(padding: EdgeInsets.all(20),
                child:ElevatedButton(onPressed: (){
-                Navigator.push(context,
-                 MaterialPageRoute(builder: (context)=> HomeScreen()));
+                Navigator.pushAndRemoveUntil(context,
+                 MaterialPageRoute(builder: (context)=> HomeScreen(),
+                 ),
+                   (route) => false,
+                   );
                },
              
              style: ElevatedButton.styleFrom(
