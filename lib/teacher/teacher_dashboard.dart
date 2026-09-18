@@ -61,7 +61,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       return parts.first.substring(0, 1).toUpperCase();
     }
 
-    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
+    return '${parts.first.substring(0, 1)}'
+            '${parts.last.substring(0, 1)}'
         .toUpperCase();
   }
 
@@ -73,7 +74,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: cream,
-
       drawer: _buildDrawer(),
 
       body: IndexedStack(
@@ -177,9 +177,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
                     Text(
                       teacherName,
                       maxLines: 1,
@@ -190,11 +188,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 3),
-
-                    Row(
-                      children: const [
+                    const Row(
+                      children: [
                         Icon(
                           Icons.school_outlined,
                           color: Colors.white70,
@@ -203,7 +199,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                         SizedBox(width: 6),
                         Text(
                           'Teacher',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
@@ -255,13 +254,15 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               _drawerItem(
                 icon: Icons.quiz_outlined,
                 title: 'Create Exam',
-                selected: _currentIndex == 2,
+                selected: false,
                 onTap: () {
                   Navigator.pop(context);
 
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const CreateQuiz()),
+                    MaterialPageRoute(
+                      builder: (context) => const CreateQuiz(),
+                    ),
                   );
                 },
               ),
@@ -280,7 +281,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               ),
 
               const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
                 child: Divider(),
               ),
 
@@ -297,7 +301,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => const LogoScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const LogoScreen(),
+                    ),
                     (route) => false,
                   );
                 },
@@ -322,7 +328,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     Color? textColor,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      margin: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 3,
+      ),
       decoration: BoxDecoration(
         color: selected ? lightPlum : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
@@ -330,16 +339,21 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       child: ListTile(
         leading: Icon(
           icon,
-          color: iconColor ?? (selected ? primaryPlum : Colors.grey.shade700),
+          color: iconColor ??
+              (selected ? primaryPlum : Colors.grey.shade700),
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: textColor ?? (selected ? primaryPlum : Colors.grey.shade800),
-            fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+            color: textColor ??
+                (selected ? primaryPlum : Colors.grey.shade800),
+            fontWeight:
+                selected ? FontWeight.bold : FontWeight.w500,
           ),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         onTap: onTap,
       ),
     );
@@ -370,7 +384,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 foregroundColor: Colors.white,
                 pinned: true,
                 elevation: 0,
-
                 leading: Builder(
                   builder: (context) {
                     return IconButton(
@@ -381,19 +394,21 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     );
                   },
                 ),
-
                 title: const Text(
                   'Teacher Dashboard',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
-
                 actions: [
                   IconButton(
                     tooltip: 'Notifications',
-                    icon: const Icon(Icons.notifications_none_rounded),
+                    icon: const Icon(
+                      Icons.notifications_none_rounded,
+                    ),
                     onPressed: () {},
                   ),
-
                   Padding(
                     padding: const EdgeInsets.only(right: 12),
                     child: CircleAvatar(
@@ -415,22 +430,31 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               // ==================================================
               // MAIN CONTENT
               // ==================================================
+
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(18, 20, 18, 30),
+                padding: const EdgeInsets.fromLTRB(
+                  18,
+                  20,
+                  18,
+                  30,
+                ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // ==================================================
                     // WELCOME CARD
                     // ==================================================
 
-                    _buildWelcomeCard(teacherName, initials),
+                    _buildWelcomeCard(
+                      teacherName,
+                      initials,
+                    ),
 
-                    // REDUCED FROM 25 TO 18
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 20),
 
                     // ==================================================
                     // OVERVIEW TITLE
                     // ==================================================
+
                     Row(
                       children: [
                         Container(
@@ -441,13 +465,11 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-
                         const SizedBox(width: 10),
-
                         const Text(
                           'Overview',
                           style: TextStyle(
-                            fontSize: 21,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF332D35),
                           ),
@@ -460,43 +482,36 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     // ==================================================
                     // COMPACT STAT CARDS
                     // ==================================================
+
                     GridView.count(
                       shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-
+                      physics:
+                          const NeverScrollableScrollPhysics(),
                       crossAxisCount: 2,
-
-                      // CHANGED FROM 1.9 TO 2.4
-                      // This makes the cards noticeably shorter.
-                      childAspectRatio: 2.4,
-
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-
+                      childAspectRatio: 2.8,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
                       children: [
                         _buildStatCard(
-                          icon: Icons.quiz_rounded,
+                          icon: Icons.quiz_outlined,
                           title: 'Total Exams',
                           value: '5',
                           color: primaryPlum,
                         ),
-
                         _buildStatCard(
-                          icon: Icons.play_circle_fill_rounded,
+                          icon: Icons.play_circle_fill,
                           title: 'Active Exams',
                           value: '2',
                           color: Colors.green,
                         ),
-
                         _buildStatCard(
-                          icon: Icons.people_alt_rounded,
+                          icon: Icons.people,
                           title: 'Students',
                           value: '24',
                           color: Colors.blue,
                         ),
-
                         _buildStatCard(
-                          icon: Icons.check_circle_rounded,
+                          icon: Icons.check_circle,
                           title: 'Completed',
                           value: '3',
                           color: Colors.orange,
@@ -504,14 +519,15 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                       ],
                     ),
 
-                    // REDUCED FROM 28 TO 18
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 20),
 
                     // ==================================================
                     // RECENT EXAMS
                     // ==================================================
+
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
                           'Recent Exams',
@@ -521,7 +537,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                             color: Color(0xFF332D35),
                           ),
                         ),
-
                         TextButton(
                           onPressed: () {
                             setState(() {
@@ -544,13 +559,16 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     // ==================================================
                     // FIREBASE EXAMS
                     // ==================================================
+
                     StreamBuilder<QuerySnapshot>(
                       stream: FirebaseFirestore.instance
                           .collection('quizzes')
-                          .orderBy('createdAt', descending: true)
+                          .orderBy(
+                            'createdAt',
+                            descending: true,
+                          )
                           .limit(3)
                           .snapshots(),
-
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
@@ -561,7 +579,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                           return _buildErrorCard();
                         }
 
-                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        if (!snapshot.hasData ||
+                            snapshot.data!.docs.isEmpty) {
                           return _buildEmptyExamsCard();
                         }
 
@@ -569,32 +588,46 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
                         return Column(
                           children: quizzes.map((doc) {
-                            final data = doc.data() as Map<String, dynamic>;
+                            final data =
+                                doc.data()
+                                    as Map<String, dynamic>;
 
                             final String title =
-                                (data['title'] ?? 'Untitled Quiz').toString();
+                                (data['title'] ??
+                                        'Untitled Quiz')
+                                    .toString();
 
                             final String subject =
-                                (data['subject'] ?? 'No Subject').toString();
+                                (data['subject'] ??
+                                        'No Subject')
+                                    .toString();
 
-                            final String type = (data['type'] ?? 'Practice')
-                                .toString();
+                            final String type =
+                                (data['type'] ??
+                                        'Practice')
+                                    .toString();
 
-                            final String status = (data['status'] ?? 'Draft')
-                                .toString();
+                            final String status =
+                                (data['status'] ??
+                                        'Draft')
+                                    .toString();
 
                             final Timestamp? createdAt =
                                 data['createdAt'] is Timestamp
-                                ? data['createdAt'] as Timestamp
-                                : null;
+                                    ? data['createdAt']
+                                        as Timestamp
+                                    : null;
 
                             return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.only(
+                                bottom: 12,
+                              ),
                               child: _buildExamCard(
                                 title: title,
                                 subject: subject,
                                 type: type,
-                                date: _formatDate(createdAt),
+                                date:
+                                    _formatDate(createdAt),
                                 status: status,
                               ),
                             );
@@ -608,6 +641,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     // ==================================================
                     // CREATE EXAM BANNER
                     // ==================================================
+
                     _buildCreateExamBanner(),
 
                     const SizedBox(height: 10),
@@ -625,13 +659,19 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   // WELCOME CARD
   // ============================================================
 
-  Widget _buildWelcomeCard(String teacherName, String initials) {
+  Widget _buildWelcomeCard(
+    String teacherName,
+    String initials,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [darkPlum, primaryPlum],
+          colors: [
+            darkPlum,
+            primaryPlum,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -649,7 +689,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           Container(
             height: 62,
             width: 62,
-            decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: accent,
+              shape: BoxShape.circle,
+            ),
             child: Center(
               child: Text(
                 initials,
@@ -666,11 +709,15 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Welcome back!',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
                 ),
 
                 const SizedBox(height: 5),
@@ -691,7 +738,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 const Text(
                   'Manage exams and monitor student progress.',
                   maxLines: 2,
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -712,11 +762,16 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 7,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -736,7 +791,11 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               color: color.withOpacity(0.10),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: color, size: 16),
+            child: Icon(
+              icon,
+              color: color,
+              size: 16,
+            ),
           ),
 
           const SizedBox(height: 3),
@@ -777,14 +836,17 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     required String date,
     required String status,
   }) {
-    final Color statusColor = _getStatusColor(status);
+    final Color statusColor =
+        _getStatusColor(status);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.035),
@@ -802,14 +864,19 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               color: lightPlum,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(Icons.quiz_rounded, color: primaryPlum, size: 26),
+            child: Icon(
+              Icons.quiz_rounded,
+              color: primaryPlum,
+              size: 26,
+            ),
           ),
 
           const SizedBox(width: 13),
 
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
@@ -831,16 +898,16 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                       size: 14,
                       color: Colors.grey.shade500,
                     ),
-
                     const SizedBox(width: 4),
-
                     Expanded(
                       child: Text(
                         '$subject • $type',
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        overflow:
+                            TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color:
+                              Colors.grey.shade600,
                           fontSize: 12,
                         ),
                       ),
@@ -857,13 +924,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                       size: 12,
                       color: Colors.grey.shade500,
                     ),
-
                     const SizedBox(width: 4),
-
                     Text(
                       date,
                       style: TextStyle(
-                        color: Colors.grey.shade500,
+                        color:
+                            Colors.grey.shade500,
                         fontSize: 11,
                       ),
                     ),
@@ -876,10 +942,15 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           const SizedBox(width: 8),
 
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 9,
+              vertical: 6,
+            ),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(20),
+              color:
+                  statusColor.withOpacity(0.10),
+              borderRadius:
+                  BorderRadius.circular(20),
             ),
             child: Text(
               status,
@@ -933,7 +1004,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
           const Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Text(
                   'Create a New Exam',
@@ -943,12 +1015,13 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 SizedBox(height: 5),
-
                 Text(
                   'Add questions and prepare an exam.',
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -959,20 +1032,36 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           ElevatedButton(
             onPressed: null,
             style: ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(Colors.white),
-              foregroundColor: WidgetStatePropertyAll(Color(0xFF6D597A)),
-              padding: WidgetStatePropertyAll(
-                EdgeInsets.symmetric(horizontal: 15, vertical: 11),
+              backgroundColor:
+                  const WidgetStatePropertyAll(
+                Colors.white,
               ),
-              shape: WidgetStatePropertyAll(
+              foregroundColor:
+                  const WidgetStatePropertyAll(
+                Color(0xFF6D597A),
+              ),
+              padding:
+                  const WidgetStatePropertyAll(
+                EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 11,
+                ),
+              ),
+              shape:
+                  const WidgetStatePropertyAll(
                 RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                  borderRadius:
+                      BorderRadius.all(
+                    Radius.circular(12),
+                  ),
                 ),
               ),
             ),
             child: const Text(
               'Create',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -991,7 +1080,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
       ),
-      child: const Center(child: CircularProgressIndicator()),
+      child: const Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 
@@ -1009,10 +1100,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       ),
       child: const Column(
         children: [
-          Icon(Icons.error_outline, color: Colors.redAccent, size: 38),
-
+          Icon(
+            Icons.error_outline,
+            color: Colors.redAccent,
+            size: 38,
+          ),
           SizedBox(height: 8),
-
           Text(
             'Unable to load recent exams.',
             style: TextStyle(
@@ -1032,33 +1125,51 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   Widget _buildEmptyExamsCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+      padding: const EdgeInsets.symmetric(
+        vertical: 28,
+        horizontal: 20,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
       ),
       child: Column(
         children: [
           Container(
             height: 60,
             width: 60,
-            decoration: BoxDecoration(color: lightPlum, shape: BoxShape.circle),
-            child: Icon(Icons.quiz_outlined, size: 30, color: primaryPlum),
+            decoration: BoxDecoration(
+              color: lightPlum,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.quiz_outlined,
+              size: 30,
+              color: primaryPlum,
+            ),
           ),
 
           const SizedBox(height: 12),
 
           const Text(
             'No exams created yet',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            ),
           ),
 
           const SizedBox(height: 5),
 
           Text(
             'Create your first exam to get started.',
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -1119,6 +1230,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       'Dec',
     ];
 
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
+    return '${date.day} '
+        '${months[date.month - 1]} '
+        '${date.year}';
   }
 }
