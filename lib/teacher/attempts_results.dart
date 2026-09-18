@@ -40,7 +40,7 @@ class _AttemptsResultsState extends State<AttemptsResults> {
     }
   }
 
-  
+
 // ================= GET STUDENT NAME =================
   Future<String> _getStudentName(String studentId) async {
     if (studentId.isEmpty) {

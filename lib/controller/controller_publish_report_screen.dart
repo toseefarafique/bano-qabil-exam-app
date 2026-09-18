@@ -33,7 +33,7 @@ class _ControllerPublishReportScreenState
     super.dispose();
   }
 
-// Only these three quizzes are displayed.
+  // Only these three quizzes are displayed.
   bool _isAllowedQuiz(String quizId) {
     return quizId == 'quiz001' ||
         quizId == 'quiz002' ||
@@ -46,23 +46,20 @@ class _ControllerPublishReportScreenState
       ) {
     final title = data['title']?.toString().trim() ?? '';
 
-
     if (title.isNotEmpty) {
-    return title;
+      return title;
     }
 
     switch (quizId) {
-    case 'quiz001':
-    return 'Flutter';
-    case 'quiz002':
-    return 'Cybersecurity';
-    case 'quiz003':
-    return 'Web Development';
-    default:
-    return quizId;
+      case 'quiz001':
+        return 'Flutter';
+      case 'quiz002':
+        return 'Cybersecurity';
+      case 'quiz003':
+        return 'Web Development';
+      default:
+        return quizId;
     }
-
-
   }
 
   Future<void> _updateQuizStatus(
@@ -75,29 +72,26 @@ class _ControllerPublishReportScreenState
         'updatedAt': Timestamp.now(),
       });
 
+      if (!mounted) return;
 
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-    content: Text(
-    'Quiz status changed to ${_formatStatus(status)}',
-    ),
-    backgroundColor: primary,
-    ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Quiz status changed to ${_formatStatus(status)}',
+          ),
+          backgroundColor: primary,
+        ),
+      );
     } catch (e) {
-    if (!mounted) return;
+      if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-    content: Text('Error: $e'),
-    backgroundColor: Colors.red,
-    ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-
-
   }
 
   Future<void> _savePassingPercentage(String quizId) async {
@@ -105,49 +99,46 @@ class _ControllerPublishReportScreenState
       _passingController.text.trim(),
     );
 
-
     if (value == null || value < 0 || value > 100) {
-    ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-    content: Text(
-    'Please enter a percentage between 0 and 100.',
-    ),
-    ),
-    );
-    return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please enter a percentage between 0 and 100.',
+          ),
+        ),
+      );
+      return;
     }
 
     try {
-    await _firestore.collection('quizzes').doc(quizId).update({
-    'passingPercentage': value,
-    'updatedAt': Timestamp.now(),
-    });
+      await _firestore.collection('quizzes').doc(quizId).update({
+        'passingPercentage': value,
+        'updatedAt': Timestamp.now(),
+      });
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-    _lastPassingQuizId = quizId;
-    });
+      setState(() {
+        _lastPassingQuizId = quizId;
+      });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-    content: Text(
-    'Passing percentage updated successfully.',
-    ),
-    ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Passing percentage updated successfully.',
+          ),
+        ),
+      );
     } catch (e) {
-    if (!mounted) return;
+      if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-    content: Text('Error: $e'),
-    backgroundColor: Colors.red,
-    ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-
-
   }
 
   String _formatStatus(String? status) {
@@ -155,23 +146,20 @@ class _ControllerPublishReportScreenState
       return 'Unknown';
     }
 
-
     switch (status.toLowerCase()) {
-    case 'draft':
-    return 'Draft';
-    case 'approved':
-    return 'Approved';
-    case 'published':
-    return 'Published';
-    case 'locked':
-    return 'Locked';
-    case 'results_released':
-    return 'Results Released';
-    default:
-    return status;
+      case 'draft':
+        return 'Draft';
+      case 'approved':
+        return 'Approved';
+      case 'published':
+        return 'Published';
+      case 'locked':
+        return 'Locked';
+      case 'results_released':
+        return 'Results Released';
+      default:
+        return status;
     }
-
-
   }
 
   Color _statusColor(String? status) {
@@ -211,42 +199,39 @@ class _ControllerPublishReportScreenState
   Widget _statusBadge(String? status) {
     final color = _statusColor(status);
 
-
     return Container(
-    padding: const EdgeInsets.symmetric(
-    horizontal: 12,
-    vertical: 7,
-    ),
-    decoration: BoxDecoration(
-    color: color.withOpacity(0.10),
-    borderRadius: BorderRadius.circular(20),
-    border: Border.all(
-    color: color.withOpacity(0.25),
-    ),
-    ),
-    child: Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-    Icon(
-    _statusIcon(status),
-    size: 16,
-    color: color,
-    ),
-    const SizedBox(width: 6),
-    Text(
-    _formatStatus(status),
-    style: TextStyle(
-    color: color,
-    fontWeight: FontWeight.w700,
-    fontSize: 12,
-    ),
-    ),
-    ],
-    ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 7,
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: color.withOpacity(0.25),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _statusIcon(status),
+            size: 16,
+            color: color,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _formatStatus(status),
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
     );
-
-
-    }
+  }
 
   Widget _sectionTitle(
       String title,
@@ -352,26 +337,23 @@ class _ControllerPublishReportScreenState
       );
     }
 
-
     return ElevatedButton.icon(
-    onPressed: onPressed,
-    icon: Icon(icon, size: 18),
-    label: Text(label),
-    style: ElevatedButton.styleFrom(
-    backgroundColor: primary,
-    foregroundColor: Colors.white,
-    elevation: 0,
-    shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(10),
-    ),
-    padding: const EdgeInsets.symmetric(
-    horizontal: 14,
-    vertical: 12,
-    ),
-    ),
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
+      ),
     );
-
-
   }
 
   Widget _statCard(
@@ -441,305 +423,303 @@ class _ControllerPublishReportScreenState
       data,
     );
 
-
     final status =
-    data['status']?.toString() ?? 'draft';
+        data['status']?.toString() ?? 'draft';
 
     final duration =
-    data['duration']?.toString() ?? '0';
+        data['duration']?.toString() ?? '0';
 
     final totalQuestions =
-    data['totalQuestion']?.toString() ?? '0';
+        data['totalQuestion']?.toString() ?? '0';
 
     final passingPercentage =
-    data['passingPercentage']?.toString() ?? '50';
+        data['passingPercentage']?.toString() ?? '50';
 
     if (_lastPassingQuizId != quizId) {
-    WidgetsBinding.instance.addPostFrameCallback(
-    (_) {
-    if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback(
+            (_) {
+          if (!mounted) return;
 
-    _passingController.text =
-    passingPercentage;
+          _passingController.text =
+              passingPercentage;
 
-    _lastPassingQuizId = quizId;
-    },
-    );
+          _lastPassingQuizId = quizId;
+        },
+      );
     }
 
     return Column(
-    crossAxisAlignment:
-    CrossAxisAlignment.start,
-    children: [
-    _sectionTitle(
-    'Quiz Overview',
-    Icons.dashboard_customize_outlined,
-    ),
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
+      children: [
+        _sectionTitle(
+          'Quiz Overview',
+          Icons.dashboard_customize_outlined,
+        ),
 
-    const SizedBox(height: 14),
+        const SizedBox(height: 14),
 
-    Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-    color: darkPrimary,
-    borderRadius: BorderRadius.circular(18),
-    ),
-    child: Row(
-    children: [
-    Container(
-    padding: const EdgeInsets.all(13),
-    decoration: BoxDecoration(
-    color: Colors.white.withOpacity(0.12),
-    borderRadius: BorderRadius.circular(13),
-    ),
-    child: const Icon(
-    Icons.quiz_outlined,
-    color: Colors.white,
-    size: 27,
-    ),
-    ),
-    const SizedBox(width: 14),
-    Expanded(
-    child: Column(
-    crossAxisAlignment:
-    CrossAxisAlignment.start,
-    children: [
-    Text(
-    title,
-    style: const TextStyle(
-    color: Colors.white,
-    fontSize: 21,
-    fontWeight: FontWeight.bold,
-    ),
-    ),
-    const SizedBox(height: 4),
-    Text(
-    'Quiz ID: $quizId',
-    style: TextStyle(
-    color: Colors.white70,
-    fontSize: 12,
-    ),
-    ),
-    ],
-    ),
-    ),
-    _statusBadge(status),
-    ],
-    ),
-    ),
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: darkPrimary,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(13),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(
+                  Icons.quiz_outlined,
+                  color: Colors.white,
+                  size: 27,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 21,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Quiz ID: $quizId',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _statusBadge(status),
+            ],
+          ),
+        ),
 
-    const SizedBox(height: 14),
+        const SizedBox(height: 14),
 
-    Row(
-    children: [
-    _infoCard(
-    'Questions',
-    totalQuestions,
-    Icons.help_outline,
-    ),
-    const SizedBox(width: 10),
-    _infoCard(
-    'Duration',
-    '$duration min',
-    Icons.timer_outlined,
-    ),
-    const SizedBox(width: 10),
-    _infoCard(
-    'Passing',
-    '$passingPercentage%',
-    Icons.percent,
-    ),
-    ],
-    ),
+        Row(
+          children: [
+            _infoCard(
+              'Questions',
+              totalQuestions,
+              Icons.help_outline,
+            ),
+            const SizedBox(width: 10),
+            _infoCard(
+              'Duration',
+              '$duration min',
+              Icons.timer_outlined,
+            ),
+            const SizedBox(width: 10),
+            _infoCard(
+              'Passing',
+              '$passingPercentage%',
+              Icons.percent,
+            ),
+          ],
+        ),
 
-    const SizedBox(height: 24),
+        const SizedBox(height: 24),
 
-    _sectionTitle(
-    'Quiz Control',
-    Icons.settings_outlined,
-    ),
+        _sectionTitle(
+          'Quiz Control',
+          Icons.settings_outlined,
+        ),
 
-    const SizedBox(height: 14),
+        const SizedBox(height: 14),
 
-    Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(18),
-    border: Border.all(color: border),
-    ),
-    child: Column(
-    crossAxisAlignment:
-    CrossAxisAlignment.start,
-    children: [
-    const Text(
-    'Change Quiz Status',
-    style: TextStyle(
-    color: textDark,
-    fontWeight: FontWeight.bold,
-    fontSize: 15,
-    ),
-    ),
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: border),
+          ),
+          child: Column(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Change Quiz Status',
+                style: TextStyle(
+                  color: textDark,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
 
-    const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-    Wrap(
-    spacing: 8,
-    runSpacing: 8,
-    children: [
-    _actionButton(
-    label: 'Approve',
-    icon: Icons.check_circle_outline,
-    onPressed: () {
-    _updateQuizStatus(
-    quizId,
-    'approved',
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _actionButton(
+                    label: 'Approve',
+                    icon: Icons.check_circle_outline,
+                    onPressed: () {
+                      _updateQuizStatus(
+                        quizId,
+                        'approved',
+                      );
+                    },
+                    outlined: true,
+                  ),
+                  _actionButton(
+                    label: 'Publish',
+                    icon: Icons.public,
+                    onPressed: () {
+                      _updateQuizStatus(
+                        quizId,
+                        'published',
+                      );
+                    },
+                  ),
+                  _actionButton(
+                    label: 'Lock',
+                    icon: Icons.lock_outline,
+                    onPressed: () {
+                      _updateQuizStatus(
+                        quizId,
+                        'locked',
+                      );
+                    },
+                    outlined: true,
+                  ),
+                  _actionButton(
+                    label: 'Release Results',
+                    icon: Icons.emoji_events_outlined,
+                    onPressed: () {
+                      _updateQuizStatus(
+                        quizId,
+                        'results_released',
+                      );
+                    },
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 22),
+
+              const Text(
+                'Passing Percentage',
+                style: TextStyle(
+                  color: textDark,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller:
+                      _passingController,
+                      keyboardType:
+                      TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText:
+                        'Enter percentage',
+                        suffixText: '%',
+                        filled: true,
+                        fillColor: background,
+                        border: OutlineInputBorder(
+                          borderRadius:
+                          BorderRadius.circular(10),
+                          borderSide:
+                          const BorderSide(
+                            color: border,
+                          ),
+                        ),
+                        enabledBorder:
+                        OutlineInputBorder(
+                          borderRadius:
+                          BorderRadius.circular(10),
+                          borderSide:
+                          const BorderSide(
+                            color: border,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      _savePassingPercentage(
+                        quizId,
+                      );
+                    },
+                    style:
+                    ElevatedButton.styleFrom(
+                      backgroundColor: primary,
+                      foregroundColor: Colors.white,
+                      padding:
+                      const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 16,
+                      ),
+                      shape:
+                      RoundedRectangleBorder(
+                        borderRadius:
+                        BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        _sectionTitle(
+          'Reports',
+          Icons.bar_chart_outlined,
+        ),
+
+        const SizedBox(height: 14),
+
+        _buildReport(quizId),
+
+        const SizedBox(height: 24),
+
+        _sectionTitle(
+          'Student Results',
+          Icons.people_outline,
+        ),
+
+        const SizedBox(height: 14),
+
+        _buildStudentResults(quizId),
+      ],
     );
-    },
-    outlined: true,
-    ),
-    _actionButton(
-    label: 'Publish',
-    icon: Icons.public,
-    onPressed: () {
-    _updateQuizStatus(
-    quizId,
-    'published',
-    );
-    },
-    ),
-    _actionButton(
-    label: 'Lock',
-    icon: Icons.lock_outline,
-    onPressed: () {
-    _updateQuizStatus(
-    quizId,
-    'locked',
-    );
-    },
-    outlined: true,
-    ),
-    _actionButton(
-    label: 'Release Results',
-    icon: Icons.emoji_events_outlined,
-    onPressed: () {
-    _updateQuizStatus(
-    quizId,
-    'results_released',
-    );
-    },
-    ),
-    ],
-    ),
-
-    const SizedBox(height: 22),
-
-    const Text(
-    'Passing Percentage',
-    style: TextStyle(
-    color: textDark,
-    fontWeight: FontWeight.bold,
-    fontSize: 15,
-    ),
-    ),
-
-    const SizedBox(height: 10),
-
-    Row(
-    children: [
-    Expanded(
-    child: TextField(
-    controller:
-    _passingController,
-    keyboardType:
-    TextInputType.number,
-    decoration: InputDecoration(
-    hintText:
-    'Enter percentage',
-    suffixText: '%',
-    filled: true,
-    fillColor: background,
-    border: OutlineInputBorder(
-    borderRadius:
-    BorderRadius.circular(10),
-    borderSide:
-    const BorderSide(
-    color: border,
-    ),
-    ),
-    enabledBorder:
-    OutlineInputBorder(
-    borderRadius:
-    BorderRadius.circular(10),
-    borderSide:
-    const BorderSide(
-    color: border,
-    ),
-    ),
-    ),
-    ),
-    ),
-    const SizedBox(width: 10),
-    ElevatedButton(
-    onPressed: () {
-    _savePassingPercentage(
-    quizId,
-    );
-    },
-    style: ElevatedButton.styleFrom(
-    backgroundColor: primary,
-    foregroundColor: Colors.white,
-    padding:
-    const EdgeInsets.symmetric(
-    horizontal: 18,
-    vertical: 16,
-    ),
-    shape:
-    RoundedRectangleBorder(
-    borderRadius:
-    BorderRadius.circular(10),
-    ),
-    ),
-    child: const Text('Save'),
-    ),
-    ],
-    ),
-    ],
-    ),
-    ),
-
-    const SizedBox(height: 24),
-
-    _sectionTitle(
-    'Reports',
-    Icons.bar_chart_outlined,
-    ),
-
-    const SizedBox(height: 14),
-
-    _buildReport(quizId),
-
-    const SizedBox(height: 24),
-
-    _sectionTitle(
-    'Student Results',
-    Icons.people_outline,
-    ),
-
-    const SizedBox(height: 14),
-
-    _buildStudentResults(quizId),
-    ],
-    );
-
-
   }
 
   Widget _buildReport(String quizId) {
     return StreamBuilder<
         QuerySnapshot<Map<String, dynamic>>>(
       stream: _firestore
-          .collection('attempts')
+          .collection('result')
           .where(
         'quizId',
         isEqualTo: quizId,
@@ -751,77 +731,254 @@ class _ControllerPublishReportScreenState
           return _loadingCard();
         }
 
-
         if (snapshot.hasError) {
-        return _errorCard(
-        'Unable to load report.',
-        );
+          return _errorCard(
+            'Unable to load report.',
+          );
         }
 
         final attempts =
-        snapshot.data?.docs ?? [];
+            snapshot.data?.docs ?? [];
 
         final totalAttempts =
-        attempts.length;
+            attempts.length;
 
         int passed = 0;
         int failed = 0;
 
         for (final attempt in attempts) {
-        final data = attempt.data();
+          final data = attempt.data();
 
-        final score =
-        (data['score'] as num?)
-            ?.toDouble() ??
-        0.0;
+          final score =
+              (data['score'] as num?)
+                  ?.toDouble() ??
+                  0.0;
 
-        final total =
-        (data['totalQuestions'] as num?)
-            ?.toDouble() ??
-        (data['totalQuestion'] as num?)
-            ?.toDouble() ??
-        0.0;
+          final total =
+              (data['totalQuestions'] as num?)
+                  ?.toDouble() ??
+                  (data['totalQuestion'] as num?)
+                      ?.toDouble() ??
+                  0.0;
 
-        if (total > 0 &&
-        (score / total) * 100 >= 50) {
-        passed++;
-        } else {
-        failed++;
-        }
+          if (total > 0 &&
+              (score / total) * 100 >= 50) {
+            passed++;
+          } else {
+            failed++;
+          }
         }
 
         return Row(
-        children: [
-        _statCard(
-        'Total Attempts',
-        '$totalAttempts',
-        Icons.assignment_outlined,
-        ),
-        const SizedBox(width: 10),
-        _statCard(
-        'Passed',
-        '$passed',
-        Icons.check_circle_outline,
-        ),
-        const SizedBox(width: 10),
-        _statCard(
-        'Failed',
-        '$failed',
-        Icons.cancel_outlined,
-        ),
-        ],
+          children: [
+            _statCard(
+              'Total Attempts',
+              '$totalAttempts',
+              Icons.assignment_outlined,
+            ),
+            const SizedBox(width: 10),
+            _statCard(
+              'Passed',
+              '$passed',
+              Icons.check_circle_outline,
+            ),
+            const SizedBox(width: 10),
+            _statCard(
+              'Failed',
+              '$failed',
+              Icons.cancel_outlined,
+            ),
+          ],
         );
       },
     );
+  }
 
+  // ============================================================
+  // UPDATED ONLY:
+  // Fetch student name from users/{studentId}.
+  // ============================================================
+  Future<String> _getStudentName(
+      Map<String, dynamic> data,
+      ) async {
+    // --------------------------------------------------
+    // 1. If result already has studentName, use it
+    // --------------------------------------------------
+    final resultStudentName =
+    data['studentName']?.toString().trim();
 
+    if (resultStudentName != null &&
+        resultStudentName.isNotEmpty) {
+      return resultStudentName;
+    }
+
+    // --------------------------------------------------
+    // 2. Get Firebase student UID from result
+    // --------------------------------------------------
+    final studentId =
+    data['studentId']?.toString().trim();
+
+    if (studentId == null || studentId.isEmpty) {
+      return 'Unknown Student';
+    }
+
+    try {
+      // ==================================================
+      // 3. Check USERS collection using document ID
+      // ==================================================
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(studentId)
+          .get();
+
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+
+        if (userData != null) {
+          final nameFields = [
+            userData['name'],
+            userData['studentName'],
+            userData['fullName'],
+            userData['displayName'],
+          ];
+
+          for (final field in nameFields) {
+            final name = field?.toString().trim();
+
+            if (name != null && name.isNotEmpty) {
+              return name;
+            }
+          }
+        }
+      }
+
+      // ==================================================
+      // 4. Check STUDENT collection using document ID
+      // ==================================================
+      final studentDoc = await _firestore
+          .collection('student')
+          .doc(studentId)
+          .get();
+
+      if (studentDoc.exists) {
+        final studentData = studentDoc.data();
+
+        if (studentData != null) {
+          final nameFields = [
+            studentData['name'],
+            studentData['studentName'],
+            studentData['fullName'],
+            studentData['displayName'],
+          ];
+
+          for (final field in nameFields) {
+            final name = field?.toString().trim();
+
+            if (name != null && name.isNotEmpty) {
+              return name;
+            }
+          }
+        }
+      }
+
+      // ==================================================
+      // 5. Search USERS collection for matching UID
+      // ==================================================
+      final usersSnapshot =
+      await _firestore.collection('users').get();
+
+      for (final doc in usersSnapshot.docs) {
+        final userData = doc.data();
+
+        final possibleIds = [
+          userData['uid'],
+          userData['userId'],
+          userData['studentId'],
+          userData['authUid'],
+        ];
+
+        bool idMatches = false;
+
+        for (final value in possibleIds) {
+          if (value?.toString().trim() == studentId) {
+            idMatches = true;
+            break;
+          }
+        }
+
+        if (idMatches) {
+          final nameFields = [
+            userData['name'],
+            userData['studentName'],
+            userData['fullName'],
+            userData['displayName'],
+          ];
+
+          for (final field in nameFields) {
+            final name = field?.toString().trim();
+
+            if (name != null && name.isNotEmpty) {
+              return name;
+            }
+          }
+        }
+      }
+
+      // ==================================================
+      // 6. Search STUDENT collection for matching UID
+      // ==================================================
+      final studentsSnapshot =
+      await _firestore.collection('student').get();
+
+      for (final doc in studentsSnapshot.docs) {
+        final studentData = doc.data();
+
+        final possibleIds = [
+          studentData['uid'],
+          studentData['userId'],
+          studentData['studentId'],
+          studentData['authUid'],
+        ];
+
+        bool idMatches = false;
+
+        for (final value in possibleIds) {
+          if (value?.toString().trim() == studentId) {
+            idMatches = true;
+            break;
+          }
+        }
+
+        if (idMatches) {
+          final nameFields = [
+            studentData['name'],
+            studentData['studentName'],
+            studentData['fullName'],
+            studentData['displayName'],
+          ];
+
+          for (final field in nameFields) {
+            final name = field?.toString().trim();
+
+            if (name != null && name.isNotEmpty) {
+              return name;
+            }
+          }
+        }
+      }
+
+      return 'Unknown Student';
+    } catch (e) {
+      debugPrint('Error finding student name: $e');
+      return 'Unknown Student';
+    }
   }
 
   Widget _buildStudentResults(String quizId) {
     return StreamBuilder<
         QuerySnapshot<Map<String, dynamic>>>(
       stream: _firestore
-          .collection('attempts')
+          .collection('result')
           .where(
         'quizId',
         isEqualTo: quizId,
@@ -833,54 +990,59 @@ class _ControllerPublishReportScreenState
           return _loadingCard();
         }
 
-
         if (snapshot.hasError) {
-        return _errorCard(
-        'Unable to load student results.',
-        );
+          return _errorCard(
+            'Unable to load student results.',
+          );
         }
 
         final attempts =
-        snapshot.data?.docs ?? [];
+            snapshot.data?.docs ?? [];
 
         if (attempts.isEmpty) {
-        return _emptyCard(
-        'No student attempts found for this quiz.',
-        );
+          return _emptyCard(
+            'No student attempts found for this quiz.',
+          );
         }
 
         return Column(
-        children: attempts.map((attempt) {
-        final data = attempt.data();
+          children: attempts.map((attempt) {
+            final data = attempt.data();
 
-        final studentName =
-        data['studentName']
-            ?.toString() ??
-        data['name']?.toString() ??
-        'Unknown Student';
+            final score =
+                data['score']?.toString() ??
+                    '0';
 
-        final score =
-        data['score']?.toString() ??
-        '0';
+            final total =
+                data['totalQuestions']
+                    ?.toString() ??
+                    data['totalQuestion']
+                        ?.toString() ??
+                    '0';
 
-        final total =
-        data['totalQuestions']
-            ?.toString() ??
-        data['totalQuestion']
-            ?.toString() ??
-        '0';
+            // Fetch the actual student name from
+            // users/{studentId} without changing the UI.
+            return FutureBuilder<String>(
+              future: _getStudentName(data),
+              builder: (
+                  context,
+                  studentSnapshot,
+                  ) {
+                final studentName =
+                    studentSnapshot.data ??
+                        'Loading...';
 
-        return _studentResultCard(
-        studentName,
-        score,
-        total,
-        );
-        }).toList(),
+                return _studentResultCard(
+                  studentName,
+                  score,
+                  total,
+                );
+              },
+            );
+          }).toList(),
         );
       },
     );
-
-
   }
 
   Widget _studentResultCard(
@@ -1066,237 +1228,234 @@ class _ControllerPublishReportScreenState
             );
           }
 
-
           if (snapshot.hasError) {
-          return _errorCard(
-          'Unable to load quizzes: ${snapshot.error}',
-          );
+            return _errorCard(
+              'Unable to load quizzes: ${snapshot.error}',
+            );
           }
 
           // Get only quiz001, quiz002 and quiz003.
-          final quizzes = (snapshot.data?.docs ?? [])
+          final quizzes =
+          (snapshot.data?.docs ?? [])
               .where(
-          (quiz) =>
-          _isAllowedQuiz(quiz.id),
-          )
-              .toList();
+                (quiz) =>
+                _isAllowedQuiz(quiz.id),
+          ).toList();
 
           // Keep the order:
           // Flutter → Cybersecurity → Web Development
           quizzes.sort((a, b) {
-          int getOrder(String id) {
-          switch (id) {
-          case 'quiz001':
-          return 1;
-          case 'quiz002':
-          return 2;
-          case 'quiz003':
-          return 3;
-          default:
-          return 99;
-          }
-          }
+            int getOrder(String id) {
+              switch (id) {
+                case 'quiz001':
+                  return 1;
+                case 'quiz002':
+                  return 2;
+                case 'quiz003':
+                  return 3;
+                default:
+                  return 99;
+              }
+            }
 
-          return getOrder(a.id)
-              .compareTo(getOrder(b.id));
+            return getOrder(a.id)
+                .compareTo(getOrder(b.id));
           });
 
           if (quizzes.isEmpty) {
-          return _emptyCard(
-          'No quizzes found.',
-          );
+            return _emptyCard(
+              'No quizzes found.',
+            );
           }
 
           // IMPORTANT:
           // Do NOT use firstWhere here.
-          // It causes the Flutter Web type error.
+          // This loop avoids the Flutter Web type error.
           QueryDocumentSnapshot<
-          Map<String, dynamic>> selectedQuiz =
-          quizzes.first;
+              Map<String, dynamic>> selectedQuiz =
+              quizzes.first;
 
           if (_selectedQuizId != null) {
-          for (final quiz in quizzes) {
-          if (quiz.id == _selectedQuizId) {
-          selectedQuiz = quiz;
-          break;
-          }
-          }
+            for (final quiz in quizzes) {
+              if (quiz.id == _selectedQuizId) {
+                selectedQuiz = quiz;
+                break;
+              }
+            }
           }
 
           if (_selectedQuizId != selectedQuiz.id) {
-          WidgetsBinding.instance
-              .addPostFrameCallback((_) {
-          if (!mounted) return;
+            WidgetsBinding.instance
+                .addPostFrameCallback((_) {
+              if (!mounted) return;
 
-          setState(() {
-          _selectedQuizId =
-          selectedQuiz.id;
-          });
-          });
+              setState(() {
+                _selectedQuizId =
+                    selectedQuiz.id;
+              });
+            });
           }
 
           final selectedData =
           selectedQuiz.data();
 
           return SingleChildScrollView(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
-          children: [
-          Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-          gradient:
-          const LinearGradient(
-          colors: [
-          darkPrimary,
-          primary,
-          ],
-          ),
-          borderRadius:
-          BorderRadius.circular(20),
-          ),
-          child: const Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
-          children: [
-          Text(
-          'Publish & Reports',
-          style: TextStyle(
-          color: Colors.white,
-          fontSize: 24,
-          fontWeight:
-          FontWeight.bold,
-          ),
-          ),
-          SizedBox(height: 6),
-          Text(
-          'Manage quizzes, publish exams and review reports.',
-          style: TextStyle(
-          color: Colors.white70,
-          fontSize: 13,
-          ),
-          ),
-          ],
-          ),
-          ),
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient:
+                    const LinearGradient(
+                      colors: [
+                        darkPrimary,
+                        primary,
+                      ],
+                    ),
+                    borderRadius:
+                    BorderRadius.circular(20),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Publish & Reports',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight:
+                          FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        'Manage quizzes, publish exams and review reports.',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
-          const SizedBox(height: 22),
+                const SizedBox(height: 22),
 
-          _sectionTitle(
-          'Select Exam',
-          Icons.library_books_outlined,
-          ),
+                _sectionTitle(
+                  'Select Exam',
+                  Icons.library_books_outlined,
+                ),
 
-          const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-          Container(
-          width: double.infinity,
-          padding:
-          const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius:
-          BorderRadius.circular(16),
-          border: Border.all(
-          color: border,
-          ),
-          ),
-          child:
-          DropdownButtonFormField<
-          String>(
-          initialValue:
-          selectedQuiz.id,
-          isExpanded: true,
-          decoration:
-          InputDecoration(
-          labelText: 'Choose Quiz',
-          prefixIcon:
-          const Icon(
-          Icons.quiz_outlined,
-          color: primary,
-          ),
-          filled: true,
-          fillColor: background,
-          border:
-          OutlineInputBorder(
-          borderRadius:
-          BorderRadius.circular(
-          12,
-          ),
-          borderSide:
-          const BorderSide(
-          color: border,
-          ),
-          ),
-          enabledBorder:
-          OutlineInputBorder(
-          borderRadius:
-          BorderRadius.circular(
-          12,
-          ),
-          borderSide:
-          const BorderSide(
-          color: border,
-          ),
-          ),
-          ),
-          items: quizzes.map((quiz) {
-          final data =
-          quiz.data();
+                Container(
+                  width: double.infinity,
+                  padding:
+                  const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius:
+                    BorderRadius.circular(16),
+                    border: Border.all(
+                      color: border,
+                    ),
+                  ),
+                  child:
+                  DropdownButtonFormField<
+                      String>(
+                    initialValue:
+                    selectedQuiz.id,
+                    isExpanded: true,
+                    decoration:
+                    InputDecoration(
+                      labelText: 'Choose Quiz',
+                      prefixIcon:
+                      const Icon(
+                        Icons.quiz_outlined,
+                        color: primary,
+                      ),
+                      filled: true,
+                      fillColor: background,
+                      border:
+                      OutlineInputBorder(
+                        borderRadius:
+                        BorderRadius.circular(
+                          12,
+                        ),
+                        borderSide:
+                        const BorderSide(
+                          color: border,
+                        ),
+                      ),
+                      enabledBorder:
+                      OutlineInputBorder(
+                        borderRadius:
+                        BorderRadius.circular(
+                          12,
+                        ),
+                        borderSide:
+                        const BorderSide(
+                          color: border,
+                        ),
+                      ),
+                    ),
+                    items: quizzes.map((quiz) {
+                      final data =
+                      quiz.data();
 
-          final title =
-          _getQuizTitle(
-          quiz.id,
-          data,
+                      final title =
+                      _getQuizTitle(
+                        quiz.id,
+                        data,
+                      );
+
+                      return DropdownMenuItem<
+                          String>(
+                        value: quiz.id,
+                        child: Text(
+                          title,
+                          overflow:
+                          TextOverflow.ellipsis,
+                          style:
+                          const TextStyle(
+                            color: textDark,
+                            fontWeight:
+                            FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value == null) {
+                        return;
+                      }
+
+                      setState(() {
+                        _selectedQuizId =
+                            value;
+                        _lastPassingQuizId =
+                        null;
+                      });
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                _buildControllerPanel(
+                  selectedQuiz.id,
+                  selectedData,
+                ),
+              ],
+            ),
           );
-
-          return DropdownMenuItem<
-          String>(
-          value: quiz.id,
-          child: Text(
-          title,
-          overflow:
-          TextOverflow.ellipsis,
-          style:
-          const TextStyle(
-          color: textDark,
-          fontWeight:
-          FontWeight.w600,
-          ),
-          ),
-          );
-          }).toList(),
-          onChanged: (value) {
-          if (value == null) {
-          return;
-          }
-
-          setState(() {
-          _selectedQuizId =
-          value;
-          _lastPassingQuizId =
-          null;
-          });
-          },
-          ),
-          ),
-
-          const SizedBox(height: 24),
-
-          _buildControllerPanel(
-          selectedQuiz.id,
-          selectedData,
-          ),
-          ],
-          ),
-          );
-          },
+        },
       ),
     );
-
-
   }
 }
